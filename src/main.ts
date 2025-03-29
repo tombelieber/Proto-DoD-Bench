@@ -1,3 +1,4 @@
+import { BenchmarkResults } from "./BenchmarkResults";
 import { MyModel } from "./MyModel";
 import { MyModelDODStore } from "./MyModelDODStore";
 
@@ -40,12 +41,13 @@ function generateBinaryData(): {
 /**
  * Decodes all messages using protobufjs (static decode).
  */
-function decodeWithProtobufjs(binaryData: Uint8Array[]) {
+function decodeWithProtobufjs(binaryData: Uint8Array[]): MyModel[] {
+    let res = [];
     for (const msg of binaryData) {
-        MyModel.decode(msg);
+        res.push(MyModel.decode(msg));
     }
+    return res;
 }
-
 // Preallocate a 20MB target buffer.
 const TARGET_SIZE = 20 * 1024 * 1024; // 20 MB in bytes.
 // Preallocate a store with 20MB of buffer space.
@@ -54,8 +56,12 @@ const dodStore = new MyModelDODStore(TARGET_SIZE);
 /**
  * Decodes messages using the DOD parser.
  */
-function decodeWithDOD(binaryData: Uint8Array[]) {
-    dodStore.decodeFromList(binaryData);
+function decodeWithDOD(binaryData: Uint8Array[]): {
+    count: number;
+    ids: Uint32Array;
+    values: Float64Array;
+} {
+    return dodStore.decodeFromList(binaryData);
 }
 
 /**
@@ -74,63 +80,70 @@ function computeStats(times: number[]) {
     return { sum, mean, median, p99, min: sorted[0], max: sorted[n - 1] };
 }
 
-/**
- * Runs the given decode function ITERATIONS times and returns an array of timings.
- * In each iteration, it generates new random binary messages.
- */
-async function runBenchmark(
-    fn: (binaryData: Uint8Array[]) => void,
-): Promise<number[]> {
-    const times: number[] = [];
-    for (let i = 0; i < ITERATIONS; i++) {
-        // Generate new random messages for this iteration.
-        const { protobufjsMessages } = generateBinaryData();
-        const start = performance.now();
-        fn(protobufjsMessages);
-        const end = performance.now();
-        times.push(end - start);
-    }
-    return times;
-}
+// /**
+//  * Runs the given decode function ITERATIONS times and returns an array of timings.
+//  * In each iteration, it generates new random binary messages.
+//  */
+// async function runBenchmark(
+//     fn: (binaryData: Uint8Array[]) => void,
+//     name: string,
+// ): Promise<number[]> {
+//     const times: number[] = [];
+//     for (let i = 0; i < ITERATIONS; i++) {
+//         // Generate new random messages for this iteration.
+//         const { protobufjsMessages } = generateBinaryData();
+//         const start = performance.now();
+//         fn(protobufjsMessages);
+//         const end = performance.now();
+//         times.push(end - start);
+//     }
+//     console.debug(
+//         `Benchmark ${name}`,
+//         fn(generateBinaryData().protobufjsMessages),
+//     );
+//     return times;
+// }
 
-export async function runBenchmarks() {
+export async function runBenchmarks(): Promise<BenchmarkResults> {
     console.log("Starting benchmarks...");
-    // Generate initial data just to know the count.
-    const { protobufjsMessages } = generateBinaryData();
-    console.log(
-        "Generated binary data:",
-        protobufjsMessages.length,
-        "messages",
-    );
+    // Generate a snapshot to log the number of messages (this is optional)
+    const { protobufjsMessages: initialMessages } = generateBinaryData();
+    console.log("Generated binary data:", initialMessages.length, "messages");
 
-    console.log("Benchmarking DOD decode...");
-    const timesDOD = await runBenchmark(decodeWithDOD);
+    const timesDOD: number[] = [];
+    const timesPB: number[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+        // Pre-generate the data snapshot for this iteration.
+        const { protobufjsMessages: dataSnapshot } = generateBinaryData();
+
+        // Benchmark DOD decode using the snapshot.
+        const startDOD = performance.now();
+        decodeWithDOD(dataSnapshot);
+        const endDOD = performance.now();
+        timesDOD.push(endDOD - startDOD);
+
+        // Benchmark protobufjs static decode using the same snapshot.
+        const startPB = performance.now();
+        decodeWithProtobufjs(dataSnapshot);
+        const endPB = performance.now();
+        timesPB.push(endPB - startPB);
+
+        // Optionally, you could verify that resultDOD and resultPB match.
+    }
+    const snapshot = generateBinaryData().protobufjsMessages;
+    const dodData = decodeWithDOD(snapshot);
+    const pbjsData = decodeWithProtobufjs(snapshot);
+    console.log("Decoded data:", { dodData, pbjsData });
+
     const statsDOD = computeStats(timesDOD);
-    console.log("DOD decode stats (ms):", statsDOD);
-
-    console.log("Benchmarking protobufjs static decode...");
-    const timesPB = await runBenchmark(decodeWithProtobufjs);
     const statsPB = computeStats(timesPB);
+
+    console.log("DOD decode stats (ms):", statsDOD);
     console.log("Protobufjs decode stats (ms):", statsPB);
 
-    // Display results on the page
-    const pre = document.createElement("pre");
-    pre.textContent = `
-Protobufjs decode stats (ms):
-Min:    ${statsPB.min.toFixed(4)}
-Max:    ${statsPB.max.toFixed(4)}
-Mean:   ${statsPB.mean.toFixed(4)}
-Median: ${statsPB.median.toFixed(4)} (p50)
-p99:    ${statsPB.p99.toFixed(4)}
-Sum:    ${statsPB.sum.toFixed(4)}
-
-DOD decode stats (ms):
-Min:    ${statsDOD.min.toFixed(4)}
-Max:    ${statsDOD.max.toFixed(4)}
-Mean:   ${statsDOD.mean.toFixed(4)}
-Median: ${statsDOD.median.toFixed(4)} (p50)
-p99:    ${statsDOD.p99.toFixed(4)}
-Sum:    ${statsDOD.sum.toFixed(4)}
-`;
-    document.body.appendChild(pre);
+    return {
+        dod: statsDOD,
+        protobufjs: statsPB,
+    };
 }
