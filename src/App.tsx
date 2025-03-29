@@ -33,7 +33,6 @@ const App: React.FC = () => {
 
     const chartContainerRef1 = useRef<HTMLDivElement>(null);
     const chartContainerRef2 = useRef<HTMLDivElement>(null);
-    const chartContainerRef3 = useRef<HTMLDivElement>(null);
 
     // Prepare row data as numbers.
     const rowData: RowData[] = useMemo(() => {
@@ -171,9 +170,7 @@ const App: React.FC = () => {
                         rowData={historicalP99Data}
                         theme={myTheme}
                         currentTheme={currentTheme}
-                        chartContainerRef3={chartContainerRef3}
                     />
-                    <div ref={chartContainerRef3} className="chart" />
                 </div>
             </main>
         </div>
