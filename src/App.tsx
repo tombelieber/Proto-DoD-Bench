@@ -199,7 +199,11 @@ const App: React.FC = () => {
                     (Structure-of-Array) decoder vs. a standard ProtobufJS
                     decoder.
                 </p>
-                <button onClick={handleRunBenchmarks} disabled={loading}>
+                <button
+                    style={{ background: "#5090DC" }}
+                    onClick={handleRunBenchmarks}
+                    disabled={loading}
+                >
                     {loading ? "Running Benchmarks..." : "Run Benchmarks"}
                 </button>
             </header>
