@@ -1,3 +1,5 @@
+// TODO: test a new data model, where it's 100 fields, compare the performance with Pbjs
+
 /**
  * MyModelDODStore acts as a memory store for decoding MyModel messages
  * using a Data-Oriented Design approach.
