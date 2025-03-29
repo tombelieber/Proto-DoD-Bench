@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BenchmarkResults, HistoricalP99Data } from "../types";
 import { runBenchmarks } from "../main";
 
-const MAX_HISTORICAL_DATA_POINTS = 100;
+const MAX_HISTORICAL_DATA_POINTS = 10;
 
 export const useBenchmark = () => {
     const [results, setResults] = useState<BenchmarkResults | null>(null);

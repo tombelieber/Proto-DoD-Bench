@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import {
+import
+{
     ChartRef,
     ColDef,
     FirstDataRenderedEvent,
@@ -8,20 +9,22 @@ import {
 } from "ag-grid-community";
 import { HistoricalP99Data } from "../types";
 
-interface HistoricalGridProps {
+interface HistoricalGridProps
+{
     rowData: HistoricalP99Data[];
     theme: Theme;
     currentTheme: string;
     chartContainerRef3: React.RefObject<HTMLDivElement | null>;
 }
 
-export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
+export const HistoricalGrid: React.FC<HistoricalGridProps> = ( {
     rowData,
     theme,
     currentTheme,
     chartContainerRef3,
-}) => {
-    const gridRef = useRef<AgGridReact>(null);
+} ) =>
+{
+    const gridRef = useRef<AgGridReact>( null );
 
     const columnDefs: ColDef<HistoricalP99Data>[] = useMemo(
         () => [
@@ -30,6 +33,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 field: "time",
                 flex: 1,
                 sort: "desc",
+                type: "dateColumn",
             },
             {
                 headerName: "ProtobufJS p99 metrics(ms)",
@@ -47,46 +51,48 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
         [],
     );
 
-    const lineChartRef = useRef<ChartRef>(undefined);
+    const lineChartRef = useRef<ChartRef>( undefined );
 
     const defaultColDef: ColDef = useMemo(
-        () => ({
+        () => ( {
             enableValue: true,
             sortable: true,
             filter: true,
             resizable: true,
-        }),
+        } ),
         [],
     );
 
     // Update grid data when historical data changes
-    useEffect(() => {
-        if (gridRef.current?.api) {
-            gridRef.current.api.applyTransaction({
+    useEffect( () =>
+    {
+        if ( gridRef.current?.api ) {
+            gridRef.current.api.applyTransaction( {
                 update: rowData,
-            });
+            } );
             // * update chart cellRange
-            if (lineChartRef.current) {
-                gridRef.current.api.updateChart({
+            if ( lineChartRef.current ) {
+                gridRef.current.api.updateChart( {
                     chartId: lineChartRef.current.chartId,
                     type: "rangeChartUpdate",
                     cellRange: {
                         rowStartIndex: 0,
                         rowEndIndex: rowData.length - 1,
                     },
-                });
+                } );
             }
         }
-    }, [rowData]);
+    }, [ rowData ] );
 
     // When historical grid data is rendered, create the line chart
     const onFirstDataRendered = useCallback(
-        (params: FirstDataRenderedEvent) => {
-            if (params.api && chartContainerRef3.current) {
-                lineChartRef.current = params.api.createRangeChart({
-                    chartType: "line",
+        ( params: FirstDataRenderedEvent ) =>
+        {
+            if ( params.api && chartContainerRef3.current ) {
+                lineChartRef.current = params.api.createRangeChart( {
+                    chartType: "area",
                     cellRange: {
-                        columns: ["time", "protobufjs", "dod"],
+                        columns: [ "time", "protobufjs", "dod" ],
                         rowStartIndex: 0,
                         rowEndIndex: rowData.length - 1,
                     },
@@ -94,7 +100,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                         common: {
                             title: {
                                 enabled: true,
-                                text: "p99 metrics",
+                                text: "p99 metrics over time",
                             },
                             legend: {
                                 position: "bottom",
@@ -108,30 +114,35 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                         },
                     },
                     chartContainer: chartContainerRef3.current,
-                });
+                    xAxis: {
+                        type: 'time',
+                        title: {
+                            text: 'Time',
+                        },
+                    },
+                } );
             }
         },
-        [chartContainerRef3, rowData.length],
+        [ chartContainerRef3, rowData ],
     );
 
     return (
         <div
-            className={`grid-container ag-theme-${
-                currentTheme === "dark" ? "dark" : "alpine"
-            }`}
+            className={ `grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"
+                }` }
         >
             <AgGridReact
-                ref={gridRef}
-                rowData={rowData}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                enableCharts={true}
+                ref={ gridRef }
+                rowData={ rowData }
+                columnDefs={ columnDefs }
+                defaultColDef={ defaultColDef }
+                enableCharts={ true }
                 cellSelection
-                onFirstDataRendered={onFirstDataRendered}
-                theme={theme}
-                chartThemes={[
+                onFirstDataRendered={ onFirstDataRendered }
+                theme={ theme }
+                chartThemes={ [
                     currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid",
-                ]}
+                ] }
             />
         </div>
     );
