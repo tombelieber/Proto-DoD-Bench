@@ -34,7 +34,7 @@ export const BenchmarkGrid: React.FC<BenchmarkGridProps> = ({
                 flex: 1,
             },
         ],
-        [],
+        []
     );
 
     const defaultColDef: ColDef = useMemo(
@@ -44,15 +44,11 @@ export const BenchmarkGrid: React.FC<BenchmarkGridProps> = ({
             filter: true,
             resizable: true,
         }),
-        [],
+        []
     );
 
     return (
-        <div
-            className={`grid-container ag-theme-${
-                currentTheme === "dark" ? "dark" : "alpine"
-            }`}
-        >
+        <div className={`grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"}`}>
             <AgGridReact
                 rowData={rowData}
                 columnDefs={columnDefs}
@@ -62,9 +58,7 @@ export const BenchmarkGrid: React.FC<BenchmarkGridProps> = ({
                 onGridReady={onGridReady}
                 onFirstDataRendered={onFirstDataRendered}
                 theme={theme}
-                chartThemes={[
-                    currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid",
-                ]}
+                chartThemes={[currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid"]}
             />
         </div>
     );

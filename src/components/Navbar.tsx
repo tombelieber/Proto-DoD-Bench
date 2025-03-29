@@ -27,18 +27,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                         NUM_MESSAGES={NUM_MESSAGES}, ITERATIONS={ITERATIONS}
                     </h3>
                     <p>
-                        This benchmark compares the performance of a DOD
-                        (Structure-of-Array) decoder vs. a standard ProtobufJS
-                        decoder.
+                        This benchmark compares the performance of a DOD (Structure-of-Array)
+                        decoder vs. a standard ProtobufJS decoder.
                     </p>
                 </div>
             </div>
             <div className="navbar-buttons">
-                <button
-                    className="run-button"
-                    onClick={onRunBenchmarks}
-                    disabled={loading}
-                >
+                <button className="run-button" onClick={onRunBenchmarks} disabled={loading}>
                     {loading ? "Running Benchmarks..." : "Run Benchmarks"}
                 </button>
                 <button
@@ -53,11 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={onThemeToggle}
                     title={`Current theme: ${themeMode} (click to cycle)`}
                 >
-                    {themeMode === "light"
-                        ? "☀️"
-                        : themeMode === "dark"
-                        ? "🌙"
-                        : "💻"}
+                    {themeMode === "light" ? "☀️" : themeMode === "dark" ? "🌙" : "💻"}
                 </button>
             </div>
         </nav>

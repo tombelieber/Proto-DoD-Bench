@@ -8,9 +8,7 @@ export const useBenchmark = () => {
     const [results, setResults] = useState<BenchmarkResults | null>(null);
     const [loading, setLoading] = useState(false);
     const [autoRun, setAutoRun] = useState(true);
-    const [historicalP99Data, setHistoricalP99Data] = useState<
-        HistoricalP99Data[]
-    >([]);
+    const [historicalP99Data, setHistoricalP99Data] = useState<HistoricalP99Data[]>([]);
     const intervalRef = useRef<number | null>(null);
 
     const handleRunBenchmarks = useCallback(async () => {
@@ -25,7 +23,7 @@ export const useBenchmark = () => {
             dod: res.dod.p99,
         };
 
-        setHistoricalP99Data((prev) => {
+        setHistoricalP99Data(prev => {
             const updated = [...prev, newData];
             if (updated.length > MAX_HISTORICAL_DATA_POINTS) {
                 return updated.slice(-MAX_HISTORICAL_DATA_POINTS);
@@ -37,7 +35,7 @@ export const useBenchmark = () => {
     }, []);
 
     const handleAutoRunToggle = useCallback(() => {
-        setAutoRun((prev) => !prev);
+        setAutoRun(prev => !prev);
     }, []);
 
     useEffect(() => {

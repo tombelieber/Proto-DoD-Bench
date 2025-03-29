@@ -2,13 +2,14 @@
 import * as $protobuf from "protobufjs/minimal";
 
 // Common aliases
-const $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
+const $Reader = $protobuf.Reader,
+    $Writer = $protobuf.Writer,
+    $util = $protobuf.util;
 
 // Exported root namespace
 const $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
 
-export const MyModel = $root.MyModel = (() => {
-
+export const MyModel = ($root.MyModel = (() => {
     /**
      * Properties of a MyModel.
      * @exports IMyModel
@@ -28,8 +29,7 @@ export const MyModel = $root.MyModel = (() => {
     function MyModel(properties) {
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null)
-                    this[keys[i]] = properties[keys[i]];
+                if (properties[keys[i]] != null) this[keys[i]] = properties[keys[i]];
     }
 
     /**
@@ -70,12 +70,11 @@ export const MyModel = $root.MyModel = (() => {
      * @returns {$protobuf.Writer} Writer
      */
     MyModel.encode = function encode(message, writer) {
-        if (!writer)
-            writer = $Writer.create();
+        if (!writer) writer = $Writer.create();
         if (message.id != null && Object.hasOwnProperty.call(message, "id"))
-            writer.uint32(/* id 1, wireType 5 =*/13).fixed32(message.id);
+            writer.uint32(/* id 1, wireType 5 =*/ 13).fixed32(message.id);
         if (message.value != null && Object.hasOwnProperty.call(message, "value"))
-            writer.uint32(/* id 2, wireType 1 =*/17).double(message.value);
+            writer.uint32(/* id 2, wireType 1 =*/ 17).double(message.value);
         return writer;
     };
 
@@ -104,23 +103,23 @@ export const MyModel = $root.MyModel = (() => {
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
     MyModel.decode = function decode(reader, length) {
-        if (!(reader instanceof $Reader))
-            reader = $Reader.create(reader);
-        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MyModel();
+        if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length,
+            message = new $root.MyModel();
         while (reader.pos < end) {
             let tag = reader.uint32();
             switch (tag >>> 3) {
-            case 1: {
+                case 1: {
                     message.id = reader.fixed32();
                     break;
                 }
-            case 2: {
+                case 2: {
                     message.value = reader.double();
                     break;
                 }
-            default:
-                reader.skipType(tag & 7);
-                break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
             }
         }
         return message;
@@ -137,8 +136,7 @@ export const MyModel = $root.MyModel = (() => {
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
     MyModel.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
+        if (!(reader instanceof $Reader)) reader = new $Reader(reader);
         return this.decode(reader, reader.uint32());
     };
 
@@ -151,14 +149,11 @@ export const MyModel = $root.MyModel = (() => {
      * @returns {string|null} `null` if valid, otherwise the reason why it is not
      */
     MyModel.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
+        if (typeof message !== "object" || message === null) return "object expected";
         if (message.id != null && message.hasOwnProperty("id"))
-            if (!$util.isInteger(message.id))
-                return "id: integer expected";
+            if (!$util.isInteger(message.id)) return "id: integer expected";
         if (message.value != null && message.hasOwnProperty("value"))
-            if (typeof message.value !== "number")
-                return "value: number expected";
+            if (typeof message.value !== "number") return "value: number expected";
         return null;
     };
 
@@ -171,13 +166,10 @@ export const MyModel = $root.MyModel = (() => {
      * @returns {MyModel} MyModel
      */
     MyModel.fromObject = function fromObject(object) {
-        if (object instanceof $root.MyModel)
-            return object;
+        if (object instanceof $root.MyModel) return object;
         let message = new $root.MyModel();
-        if (object.id != null)
-            message.id = object.id >>> 0;
-        if (object.value != null)
-            message.value = Number(object.value);
+        if (object.id != null) message.id = object.id >>> 0;
+        if (object.value != null) message.value = Number(object.value);
         return message;
     };
 
@@ -191,17 +183,16 @@ export const MyModel = $root.MyModel = (() => {
      * @returns {Object.<string,*>} Plain object
      */
     MyModel.toObject = function toObject(message, options) {
-        if (!options)
-            options = {};
+        if (!options) options = {};
         let object = {};
         if (options.defaults) {
             object.id = 0;
             object.value = 0;
         }
-        if (message.id != null && message.hasOwnProperty("id"))
-            object.id = message.id;
+        if (message.id != null && message.hasOwnProperty("id")) object.id = message.id;
         if (message.value != null && message.hasOwnProperty("value"))
-            object.value = options.json && !isFinite(message.value) ? String(message.value) : message.value;
+            object.value =
+                options.json && !isFinite(message.value) ? String(message.value) : message.value;
         return object;
     };
 
@@ -232,6 +223,6 @@ export const MyModel = $root.MyModel = (() => {
     };
 
     return MyModel;
-})();
+})());
 
 export { $root as default };

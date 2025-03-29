@@ -2,17 +2,15 @@ import * as $protobuf from "protobufjs";
 import Long = require("long");
 /** Properties of a MyModel. */
 export interface IMyModel {
-
     /** MyModel id */
-    id?: (number|null);
+    id?: number | null;
 
     /** MyModel value */
-    value?: (number|null);
+    value?: number | null;
 }
 
 /** Represents a MyModel. */
 export class MyModel implements IMyModel {
-
     /**
      * Constructs a new MyModel.
      * @param [properties] Properties to set
@@ -56,7 +54,7 @@ export class MyModel implements IMyModel {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): MyModel;
+    public static decode(reader: $protobuf.Reader | Uint8Array, length?: number): MyModel;
 
     /**
      * Decodes a MyModel message from the specified reader or buffer, length delimited.
@@ -65,14 +63,14 @@ export class MyModel implements IMyModel {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): MyModel;
+    public static decodeDelimited(reader: $protobuf.Reader | Uint8Array): MyModel;
 
     /**
      * Verifies a MyModel message.
      * @param message Plain object to verify
      * @returns `null` if valid, otherwise the reason why it is not
      */
-    public static verify(message: { [k: string]: any }): (string|null);
+    public static verify(message: { [k: string]: any }): string | null;
 
     /**
      * Creates a MyModel message from a plain object. Also converts values to their respective internal types.
@@ -87,7 +85,10 @@ export class MyModel implements IMyModel {
      * @param [options] Conversion options
      * @returns Plain object
      */
-    public static toObject(message: MyModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
+    public static toObject(
+        message: MyModel,
+        options?: $protobuf.IConversionOptions
+    ): { [k: string]: any };
 
     /**
      * Converts this MyModel to JSON.

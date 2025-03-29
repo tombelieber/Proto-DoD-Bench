@@ -10,9 +10,7 @@ export const useTheme = () => {
 
     const currentTheme = useMemo(() => {
         if (themeMode === "system") {
-            return window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light";
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
         return themeMode;
     }, [themeMode]);
@@ -25,13 +23,8 @@ export const useTheme = () => {
     useEffect(() => {
         const updateTheme = () => {
             if (themeMode === "system") {
-                const systemDark = window.matchMedia(
-                    "(prefers-color-scheme: dark)",
-                ).matches;
-                document.documentElement.setAttribute(
-                    "data-theme",
-                    systemDark ? "dark" : "light",
-                );
+                const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                document.documentElement.setAttribute("data-theme", systemDark ? "dark" : "light");
             } else {
                 document.documentElement.setAttribute("data-theme", themeMode);
             }
@@ -55,7 +48,7 @@ export const useTheme = () => {
     }, [themeMode]);
 
     const cycleTheme = () => {
-        setThemeMode((prev) => {
+        setThemeMode(prev => {
             switch (prev) {
                 case "light":
                     return "dark";

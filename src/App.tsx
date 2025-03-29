@@ -1,9 +1,6 @@
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise";
 import { FirstDataRenderedEvent, ModuleRegistry } from "ag-grid-community";
-import {
-    IntegratedChartsModule,
-    AllEnterpriseModule,
-} from "ag-grid-enterprise";
+import { IntegratedChartsModule, AllEnterpriseModule } from "ag-grid-enterprise";
 import React, { useCallback, useMemo, useRef } from "react";
 import "./App.css";
 import { useBenchmark } from "./hooks/useBenchmark";
@@ -72,72 +69,65 @@ const App: React.FC = () => {
     }, [results]);
 
     // When grid data is rendered, automatically create charts.
-    const onFirstDataRendered = useCallback(
-        (params: FirstDataRenderedEvent) => {
-            if (
-                params.api &&
-                chartContainerRef1.current &&
-                chartContainerRef2.current
-            ) {
-                // Chart 1: rows 0-4 (all metrics except "Sum")
-                params.api.createRangeChart({
-                    chartType: "groupedColumn",
-                    cellRange: {
-                        columns: ["metric", "protobufjs", "dod"],
-                        rowStartIndex: 0,
-                        rowEndIndex: 4,
-                    },
-                    chartThemeOverrides: {
-                        common: {
-                            title: {
-                                enabled: true,
-                                text: "Benchmark Stats (ms) - Metrics",
-                            },
-                            legend: {
-                                position: "bottom",
-                            },
-                            padding: {
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20,
-                            },
+    const onFirstDataRendered = useCallback((params: FirstDataRenderedEvent) => {
+        if (params.api && chartContainerRef1.current && chartContainerRef2.current) {
+            // Chart 1: rows 0-4 (all metrics except "Sum")
+            params.api.createRangeChart({
+                chartType: "groupedColumn",
+                cellRange: {
+                    columns: ["metric", "protobufjs", "dod"],
+                    rowStartIndex: 0,
+                    rowEndIndex: 4,
+                },
+                chartThemeOverrides: {
+                    common: {
+                        title: {
+                            enabled: true,
+                            text: "Benchmark Stats (ms) - Metrics",
+                        },
+                        legend: {
+                            position: "bottom",
+                        },
+                        padding: {
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 20,
                         },
                     },
-                    chartContainer: chartContainerRef1.current,
-                });
+                },
+                chartContainer: chartContainerRef1.current,
+            });
 
-                // Chart 2: row 5 ("Sum")
-                params.api.createRangeChart({
-                    chartType: "groupedColumn",
-                    cellRange: {
-                        columns: ["metric", "protobufjs", "dod"],
-                        rowStartIndex: 5,
-                        rowEndIndex: 5,
-                    },
-                    chartThemeOverrides: {
-                        common: {
-                            title: {
-                                enabled: true,
-                                text: "Benchmark Stats (ms) - Sum",
-                            },
-                            legend: {
-                                position: "bottom",
-                            },
-                            padding: {
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20,
-                            },
+            // Chart 2: row 5 ("Sum")
+            params.api.createRangeChart({
+                chartType: "groupedColumn",
+                cellRange: {
+                    columns: ["metric", "protobufjs", "dod"],
+                    rowStartIndex: 5,
+                    rowEndIndex: 5,
+                },
+                chartThemeOverrides: {
+                    common: {
+                        title: {
+                            enabled: true,
+                            text: "Benchmark Stats (ms) - Sum",
+                        },
+                        legend: {
+                            position: "bottom",
+                        },
+                        padding: {
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 20,
                         },
                     },
-                    chartContainer: chartContainerRef2.current,
-                });
-            }
-        },
-        [],
-    );
+                },
+                chartContainer: chartContainerRef2.current,
+            });
+        }
+    }, []);
 
     return (
         <div className="app-container">

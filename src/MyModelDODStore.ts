@@ -41,9 +41,7 @@ export class MyModelDODStore {
         let offset = 0;
         for (const arr of arrays) {
             if (offset + arr.length > this.targetBuffer.length) {
-                throw new Error(
-                    "Target buffer is not large enough to hold all data.",
-                );
+                throw new Error("Target buffer is not large enough to hold all data.");
             }
             this.targetBuffer.set(arr, offset);
             offset += arr.length;
@@ -65,7 +63,7 @@ export class MyModelDODStore {
         const dv = new DataView(
             contiguousBuffer.buffer,
             contiguousBuffer.byteOffset,
-            contiguousBuffer.byteLength,
+            contiguousBuffer.byteLength
         );
         for (let i = 0; i < count; i++) {
             const base = i * this.MESSAGE_SIZE;

@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import {
-    ChartRef,
-    ColDef,
-    FirstDataRenderedEvent,
-    Theme,
-} from "ag-grid-community";
+import { ChartRef, ColDef, FirstDataRenderedEvent, Theme } from "ag-grid-community";
 import { HistoricalP99Data } from "../types";
 
 interface HistoricalGridProps {
@@ -14,11 +9,7 @@ interface HistoricalGridProps {
     currentTheme: string;
 }
 
-export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
-    rowData,
-    theme,
-    currentTheme,
-}) => {
+export const HistoricalGrid: React.FC<HistoricalGridProps> = ({ rowData, theme, currentTheme }) => {
     const gridRef = useRef<AgGridReact>(null);
     const chartContainerRef3 = useRef<HTMLDivElement>(null);
     const columnDefs: ColDef<HistoricalP99Data>[] = useMemo(
@@ -43,7 +34,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 flex: 1,
             },
         ],
-        [],
+        []
     );
 
     const lineChartRef = useRef<ChartRef>(undefined);
@@ -55,7 +46,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
             filter: true,
             resizable: true,
         }),
-        [],
+        []
     );
 
     // Update grid data when historical data changes
@@ -110,15 +101,13 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 });
             }
         },
-        [chartContainerRef3, rowData],
+        [chartContainerRef3, rowData]
     );
 
     return (
         <>
             <div
-                className={`grid-container ag-theme-${
-                    currentTheme === "dark" ? "dark" : "alpine"
-                }`}
+                className={`grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"}`}
             >
                 <AgGridReact
                     ref={gridRef}
@@ -129,9 +118,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                     cellSelection
                     onFirstDataRendered={onFirstDataRendered}
                     theme={theme}
-                    chartThemes={[
-                        currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid",
-                    ]}
+                    chartThemes={[currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid"]}
                 />
             </div>
             <div ref={chartContainerRef3} className="chart" />
