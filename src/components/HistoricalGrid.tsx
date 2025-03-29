@@ -1,0 +1,138 @@
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { AgGridReact } from "ag-grid-react";
+import {
+    ChartRef,
+    ColDef,
+    FirstDataRenderedEvent,
+    Theme,
+} from "ag-grid-community";
+import { HistoricalP99Data } from "../types";
+
+interface HistoricalGridProps {
+    rowData: HistoricalP99Data[];
+    theme: Theme;
+    currentTheme: string;
+    chartContainerRef3: React.RefObject<HTMLDivElement | null>;
+}
+
+export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
+    rowData,
+    theme,
+    currentTheme,
+    chartContainerRef3,
+}) => {
+    const gridRef = useRef<AgGridReact>(null);
+
+    const columnDefs: ColDef<HistoricalP99Data>[] = useMemo(
+        () => [
+            {
+                headerName: "Time",
+                field: "time",
+                flex: 1,
+                sort: "desc",
+            },
+            {
+                headerName: "DOD p99 metrics(ms)",
+                field: "dod",
+                type: "numericColumn",
+                flex: 1,
+            },
+            {
+                headerName: "ProtobufJS p99 metrics(ms)",
+                field: "protobufjs",
+                type: "numericColumn",
+                flex: 1,
+            },
+        ],
+        [],
+    );
+
+    const lineChartRef = useRef<ChartRef>(undefined);
+
+    const defaultColDef: ColDef = useMemo(
+        () => ({
+            enableValue: true,
+            sortable: true,
+            filter: true,
+            resizable: true,
+        }),
+        [],
+    );
+
+    // Update grid data when historical data changes
+    useEffect(() => {
+        if (gridRef.current?.api) {
+            gridRef.current.api.applyTransaction({
+                update: rowData,
+            });
+            // * update chart cellRange
+            if (lineChartRef.current) {
+                gridRef.current.api.updateChart({
+                    chartId: lineChartRef.current.chartId,
+                    type: "rangeChartUpdate",
+                    cellRange: {
+                        rowStartIndex: 0,
+                        rowEndIndex: rowData.length - 1,
+                    },
+                });
+            }
+        }
+    }, [rowData]);
+
+    // When historical grid data is rendered, create the line chart
+    const onFirstDataRendered = useCallback(
+        (params: FirstDataRenderedEvent) => {
+            if (params.api && chartContainerRef3.current) {
+                params.api.createRangeChart({
+                    chartType: "line",
+                    cellRange: {
+                        columns: ["time", "protobufjs", "dod"],
+                        rowStartIndex: 0,
+                        rowEndIndex: rowData.length - 1,
+                    },
+                    chartThemeOverrides: {
+                        common: {
+                            title: {
+                                enabled: true,
+                                text: "p99 metrics",
+                            },
+                            legend: {
+                                position: "bottom",
+                            },
+                            padding: {
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20,
+                            },
+                        },
+                    },
+                    chartContainer: chartContainerRef3.current,
+                });
+            }
+        },
+        [chartContainerRef3, rowData.length],
+    );
+
+    return (
+        <div
+            className={`grid-container ag-theme-${
+                currentTheme === "dark" ? "dark" : "alpine"
+            }`}
+        >
+            <AgGridReact
+                ref={gridRef}
+                rowData={rowData}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                enableRangeSelection={true}
+                enableCharts={true}
+                onFirstDataRendered={onFirstDataRendered}
+                theme={theme}
+                chartThemes={[
+                    currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid",
+                ]}
+            />
+        </div>
+    );
+};
