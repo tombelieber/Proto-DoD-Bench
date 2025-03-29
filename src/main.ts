@@ -2,8 +2,7 @@ import { MyModel } from "./MyModel";
 import { MyModelDODStore } from "./MyModelDODStore";
 
 const NUM_MESSAGES = 10_000;
-const ITERATIONS = 1000;
-
+const ITERATIONS = 100;
 // const NUM_MESSAGES = 1e6; // 1 million messages
 // const ITERATIONS = 100;
 
@@ -13,7 +12,8 @@ interface MyModelData {
 }
 
 /**
- * Generates an array of binary messages and their original data.
+ * Generates an array of binary messages and their original data,
+ * with random values for each iteration.
  */
 function generateBinaryData(): {
     protobufjsMessages: Uint8Array[];
@@ -23,16 +23,15 @@ function generateBinaryData(): {
     const originalData: MyModelData[] = [];
 
     for (let i = 0; i < NUM_MESSAGES; i++) {
-        // Use smaller values to avoid precision loss
+        // Generate a random value (for example, between 1.0 and 100.0)
         const msg = {
             id: i,
-            value: 1.0 + i * 0.1, // This will give us values like 1.0, 1.1, 1.2, etc.
+            value: 1.0 + Math.random() * 99.0,
         };
 
         // Generate protobufjs message
         const protobufjsEncoded = MyModel.encode(msg);
         protobufjsMessages.push(protobufjsEncoded.finish());
-
         originalData.push(msg);
     }
     return { protobufjsMessages, originalData };
@@ -53,10 +52,7 @@ const TARGET_SIZE = 20 * 1024 * 1024; // 20 MB in bytes.
 const dodStore = new MyModelDODStore(TARGET_SIZE);
 
 /**
- * Usage example:
- * Given an array of Uint8Array messages (each 14 bytes),
- * concatenate them into the preallocated targetBuffer and decode them
- * into preallocated ids and values arrays.
+ * Decodes messages using the DOD parser.
  */
 function decodeWithDOD(binaryData: Uint8Array[]) {
     dodStore.decodeFromList(binaryData);
@@ -80,26 +76,26 @@ function computeStats(times: number[]) {
 
 /**
  * Runs the given decode function ITERATIONS times and returns an array of timings.
+ * In each iteration, it generates new random binary messages.
  */
 async function runBenchmark(
     fn: (binaryData: Uint8Array[]) => void,
-    binaryData: Uint8Array[],
 ): Promise<number[]> {
     const times: number[] = [];
     for (let i = 0; i < ITERATIONS; i++) {
+        // Generate new random messages for this iteration.
+        const { protobufjsMessages } = generateBinaryData();
         const start = performance.now();
-        fn(binaryData);
+        fn(protobufjsMessages);
         const end = performance.now();
         times.push(end - start);
-
-        // // Allow a frame for UI responsiveness.
-        // await new Promise(requestAnimationFrame);
     }
     return times;
 }
 
 export async function runBenchmarks() {
     console.log("Starting benchmarks...");
+    // Generate initial data just to know the count.
     const { protobufjsMessages } = generateBinaryData();
     console.log(
         "Generated binary data:",
@@ -107,98 +103,34 @@ export async function runBenchmarks() {
         "messages",
     );
 
-    console.log("Benchmarking decodeWithDOD toJSON static decode...");
-    const timesProtobufDOD = await runBenchmark(
-        decodeWithDOD,
-        protobufjsMessages,
-    );
-    const statsProtobufDOD = computeStats(timesProtobufDOD);
-    console.log("DecodeWithDOD toJSON decode stats (ms):", statsProtobufDOD);
+    console.log("Benchmarking DOD decode...");
+    const timesDOD = await runBenchmark(decodeWithDOD);
+    const statsDOD = computeStats(timesDOD);
+    console.log("DOD decode stats (ms):", statsDOD);
 
     console.log("Benchmarking protobufjs static decode...");
-    const timesProtobufjs = await runBenchmark(
-        decodeWithProtobufjs,
-        protobufjsMessages,
-    );
-    const statsProtobufjs = computeStats(timesProtobufjs);
-    console.log("Protobufjs decode stats (ms):", statsProtobufjs);
+    const timesPB = await runBenchmark(decodeWithProtobufjs);
+    const statsPB = computeStats(timesPB);
+    console.log("Protobufjs decode stats (ms):", statsPB);
 
     // Display results on the page
     const pre = document.createElement("pre");
     pre.textContent = `
 Protobufjs decode stats (ms):
-Min:    ${statsProtobufjs.min.toFixed(2)}
-Max:    ${statsProtobufjs.max.toFixed(2)}
-Mean:   ${statsProtobufjs.mean.toFixed(2)}
-Median: ${statsProtobufjs.median.toFixed(2)} (p50)
-p99:    ${statsProtobufjs.p99.toFixed(2)}
-Sum:    ${statsProtobufjs.sum.toFixed(2)}
+Min:    ${statsPB.min.toFixed(4)}
+Max:    ${statsPB.max.toFixed(4)}
+Mean:   ${statsPB.mean.toFixed(4)}
+Median: ${statsPB.median.toFixed(4)} (p50)
+p99:    ${statsPB.p99.toFixed(4)}
+Sum:    ${statsPB.sum.toFixed(4)}
 
 DOD decode stats (ms):
-Min:    ${statsProtobufDOD.min.toFixed(2)}
-Max:    ${statsProtobufDOD.max.toFixed(2)}
-Mean:   ${statsProtobufDOD.mean.toFixed(2)}
-Median: ${statsProtobufDOD.median.toFixed(2)} (p50)
-p99:    ${statsProtobufDOD.p99.toFixed(2)}
-Sum:    ${statsProtobufDOD.sum.toFixed(2)}
+Min:    ${statsDOD.min.toFixed(4)}
+Max:    ${statsDOD.max.toFixed(4)}
+Mean:   ${statsDOD.mean.toFixed(4)}
+Median: ${statsDOD.median.toFixed(4)} (p50)
+p99:    ${statsDOD.p99.toFixed(4)}
+Sum:    ${statsDOD.sum.toFixed(4)}
 `;
     document.body.appendChild(pre);
 }
-
-// Protobufjs decode stats (ms):
-// Min:    33.00
-// Max:    38.90
-// Mean:   33.97
-// Median: 33.85 (p50)
-// p99:    38.90
-// Sum:    3397.40
-
-// Protobufjs ToJSON decode stats (ms):
-// Min:    33.00
-// Max:    38.90
-// Mean:   33.97
-// Median: 33.85 (p50)
-// p99:    38.90
-// Sum:    3397.40
-
-// pbf decode stats (ms):
-// Min:    51.40
-// Max:    53.30
-// Mean:   52.28
-// Median: 52.30 (p50)
-// p99:    53.30
-// Sum:    5228.30
-
-// Protobufjs decode stats (ms):
-// Min:    33.00
-// Max:    35.40
-// Mean:   33.68
-// Median: 33.60 (p50)
-// p99:    35.40
-// Sum:    3368.40
-
-// DOD decode stats (ms):
-// Min:    28.00
-// Max:    49.00
-// Mean:   29.35
-// Median: 29.05 (p50)
-// p99:    49.00
-// Sum:    2935.20
-
-// const NUM_MESSAGES = 10_000; const ITERATIONS = 1000; Preview mode
-
-// Protobufjs decode stats (ms):
-// Min:    0.30
-// Max:    0.70
-// Mean:   0.48
-// Median: 0.50 (p50)
-// p99:    0.60
-// Sum:    481.90
-
-// DOD decode stats (ms):
-// Min:    0.30
-// Max:    1.10
-// Mean:   0.40
-// Median: 0.40 (p50)
-// p99:    0.60
-// Sum:    403.70
