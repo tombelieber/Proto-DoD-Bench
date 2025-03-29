@@ -7,9 +7,9 @@
     --text-secondary: #4b5563;
     --text-tertiary: #6b7280;
     --border-color: #e5e7eb;
-    --button-primary: #5090DC;
-    --button-success: #50DC50;
-    --button-danger: #DC5050;
+    --button-primary: #5090dc;
+    --button-success: #50dc50;
+    --button-danger: #dc5050;
 }
 
 [data-theme="dark"] {
@@ -33,7 +33,8 @@
 }
 
 /* Reset body and html */
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -45,39 +46,39 @@ html, body {
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+    filter: drop-shadow(0 0 2em #646cffaa);
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+    filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+    a:nth-of-type(2) .logo {
+        animation: logo-spin infinite 20s linear;
+    }
 }
 
 .card {
-  padding: 2em;
+    padding: 2em;
 }
 
 .read-the-docs {
-  color: #888;
+    color: #888;
 }
 
 .app-container {
@@ -198,7 +199,7 @@ html, body {
 }
 
 .top-section {
-    flex: 1;
+    flex: 2;
     display: flex;
     gap: 1rem;
     min-height: 0;

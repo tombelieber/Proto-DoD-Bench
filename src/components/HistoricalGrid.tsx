@@ -32,14 +32,14 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 sort: "desc",
             },
             {
-                headerName: "DOD p99 metrics(ms)",
-                field: "dod",
+                headerName: "ProtobufJS p99 metrics(ms)",
+                field: "protobufjs",
                 type: "numericColumn",
                 flex: 1,
             },
             {
-                headerName: "ProtobufJS p99 metrics(ms)",
-                field: "protobufjs",
+                headerName: "DOD p99 metrics(ms)",
+                field: "dod",
                 type: "numericColumn",
                 flex: 1,
             },
@@ -83,7 +83,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
     const onFirstDataRendered = useCallback(
         (params: FirstDataRenderedEvent) => {
             if (params.api && chartContainerRef3.current) {
-                params.api.createRangeChart({
+                lineChartRef.current = params.api.createRangeChart({
                     chartType: "line",
                     cellRange: {
                         columns: ["time", "protobufjs", "dod"],
@@ -125,8 +125,8 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 rowData={rowData}
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
-                enableRangeSelection={true}
                 enableCharts={true}
+                cellSelection
                 onFirstDataRendered={onFirstDataRendered}
                 theme={theme}
                 chartThemes={[
