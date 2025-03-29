@@ -1,9 +1,8 @@
 import { BenchmarkResults } from "./BenchmarkResults";
 import { MyModel } from "./MyModel";
 import { MyModelDODStore } from "./MyModelDODStore";
+import { NUM_MESSAGES, ITERATIONS } from "./NUM_MESSAGES";
 
-const NUM_MESSAGES = 10_000;
-const ITERATIONS = 100;
 // const NUM_MESSAGES = 1e6; // 1 million messages
 // const ITERATIONS = 100;
 
@@ -42,7 +41,7 @@ function generateBinaryData(): {
  * Decodes all messages using protobufjs (static decode).
  */
 function decodeWithProtobufjs(binaryData: Uint8Array[]): MyModel[] {
-    let res = [];
+    const res = [];
     for (const msg of binaryData) {
         res.push(MyModel.decode(msg));
     }

@@ -11,8 +11,15 @@ import {
     IntegratedChartsModule,
 } from "ag-grid-enterprise";
 import { AgGridReact } from "ag-grid-react";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useMemo,
+    useRef,
+    useState,
+    useEffect,
+} from "react";
 import { runBenchmarks } from "./main"; // Adjust the path accordingly
+import { ITERATIONS, NUM_MESSAGES } from "./NUM_MESSAGES";
 
 // Register enterprise modules.
 ModuleRegistry.registerModules([
@@ -43,8 +50,10 @@ interface RowData {
 const App: React.FC = () => {
     const [results, setResults] = useState<BenchmarkResults | null>(null);
     const [loading, setLoading] = useState(false);
+    const [autoRun, setAutoRun] = useState(true);
     const chartContainerRef1 = useRef<HTMLDivElement>(null);
     const chartContainerRef2 = useRef<HTMLDivElement>(null);
+    const intervalRef = useRef<number | null>(null);
 
     const handleRunBenchmarks = async () => {
         setLoading(true);
@@ -53,6 +62,31 @@ const App: React.FC = () => {
         setResults(res);
         setLoading(false);
     };
+
+    // Handle auto-run toggle
+    const handleAutoRunToggle = () => {
+        setAutoRun((prev) => !prev);
+    };
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        if (autoRun) {
+            // Start auto-running
+            intervalRef.current = window.setInterval(handleRunBenchmarks, 1000);
+        } else {
+            // Stop auto-running
+            if (intervalRef.current !== null) {
+                window.clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        }
+
+        return () => {
+            if (intervalRef.current !== null) {
+                window.clearInterval(intervalRef.current);
+            }
+        };
+    }, [autoRun]);
 
     // Prepare row data as numbers.
     const rowData: RowData[] = useMemo(() => {
@@ -188,6 +222,9 @@ const App: React.FC = () => {
         >
             <header style={{ padding: "1rem" }}>
                 <h1>Data Oriented Protobuf Decoding Benchmark</h1>
+                <h3>
+                    NUM_MESSAGES={NUM_MESSAGES}, ITERATIONS={ITERATIONS}
+                </h3>
                 <p>
                     This benchmark compares the performance of a DOD
                     (Structure-of-Array) decoder vs. a standard ProtobufJS
@@ -199,6 +236,16 @@ const App: React.FC = () => {
                     disabled={loading}
                 >
                     {loading ? "Running Benchmarks..." : "Run Benchmarks"}
+                </button>
+                <button
+                    style={{
+                        background: autoRun ? "#DC5050" : "#50DC50",
+                        marginLeft: "1rem",
+                    }}
+                    onClick={handleAutoRunToggle}
+                    disabled={loading}
+                >
+                    {autoRun ? "Stop Auto-Run" : "Start Auto-Run"}
                 </button>
             </header>
             <div style={{ flex: 1, display: "flex" }}>
