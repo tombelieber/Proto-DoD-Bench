@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message MyModel {
+  fixed32 id = 1;
+  double value = 2;
+}
