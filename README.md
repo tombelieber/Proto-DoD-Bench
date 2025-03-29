@@ -17,6 +17,46 @@ A modern web application for benchmarking and comparing performance between Prot
   - p99 execution time
   - Total execution time
 
+## Screenshots
+
+### Main Dashboard
+![Main Dashboard](public/screenshots/main-dashboard.png)
+
+### Performance Metrics
+![Performance Metrics](public/screenshots/performance-metrics.png)
+
+### Historical Data
+![Historical Data](public/screenshots/historical-data.png)
+
+## TODO
+
+### Benchmark Scenarios
+The application will be extended to compare the following scenarios:
+
+1. **Large Number Fields Model**
+   - 100 numeric fields (integers, floats, doubles)
+   - Comparison of serialization/deserialization performance
+   - Memory usage analysis
+
+2. **Large String Fields Model**
+   - 100 string fields
+   - Various string lengths and patterns
+   - UTF-8 encoding performance
+
+3. **Nested Fields Model**
+   - Complex nested structures
+   - Multiple levels of nesting
+   - Array fields within nested objects
+   - Performance impact of different nesting depths
+
+### Future Enhancements
+- [ ] Add support for different protobuf field types
+- [ ] Implement memory usage tracking
+- [ ] Add export functionality for benchmark results
+- [ ] Support for custom benchmark scenarios
+- [ ] Real-time performance graphs
+- [ ] Comparison with other serialization formats
+
 ## Tech Stack
 
 - React 19
