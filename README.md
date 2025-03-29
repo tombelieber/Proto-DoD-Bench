@@ -10,46 +10,51 @@ A modern web application for benchmarking and comparing performance between Prot
 - Dark/Light theme support
 - Auto-run capability for continuous benchmarking
 - Comprehensive performance metrics including:
-  - Minimum execution time
-  - Maximum execution time
-  - Mean execution time
-  - Median (p50) execution time
-  - p99 execution time
-  - Total execution time
+    - Minimum execution time
+    - Maximum execution time
+    - Mean execution time
+    - Median (p50) execution time
+    - p99 execution time
+    - Total execution time
 
 ## Screenshots
 
 ### Main Dashboard
+
 ![Main Dashboard](public/screenshots/main-dashboard.png)
 
-### Performance Metrics
+<!-- ### Performance Metrics
 ![Performance Metrics](public/screenshots/performance-metrics.png)
 
 ### Historical Data
-![Historical Data](public/screenshots/historical-data.png)
+![Historical Data](public/screenshots/historical-data.png) -->
 
 ## TODO
 
-### Benchmark Scenarios
+### Benchmark **Scenarios**
+
 The application will be extended to compare the following scenarios:
 
 1. **Large Number Fields Model**
-   - 100 numeric fields (integers, floats, doubles)
-   - Comparison of serialization/deserialization performance
-   - Memory usage analysis
+
+    - 100 numeric fields (integers, floats, doubles)
+    - Comparison of serialization/deserialization performance
+    - Memory usage analysis
 
 2. **Large String Fields Model**
-   - 100 string fields
-   - Various string lengths and patterns
-   - UTF-8 encoding performance
+
+    - 100 string fields
+    - Various string lengths and patterns
+    - UTF-8 encoding **performance**
 
 3. **Nested Fields Model**
-   - Complex nested structures
-   - Multiple levels of nesting
-   - Array fields within nested objects
-   - Performance impact of different nesting depths
+    - Complex nested structures
+    - Multiple levels of nesting
+    - Array fields within nested objects
+    - Performance impact of different nesting depths
 
 ### Future Enhancements
+
 - [ ] Add support for different protobuf field types
 - [ ] Implement memory usage tracking
 - [ ] Add export functionality for benchmark results
@@ -78,22 +83,26 @@ The application will be extended to compare the following scenarios:
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/protododbench.git
 cd protododbench
 ```
 
 2. Install dependencies:
+
 ```bash
 bun install
 ```
 
 3. Generate Protocol Buffer files:
+
 ```bash
 bun run generate:proto
 ```
 
 4. Start the development server:
+
 ```bash
 bun run dev
 ```
