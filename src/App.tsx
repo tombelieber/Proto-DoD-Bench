@@ -150,9 +150,6 @@ const App: React.FC = () => {
                                 text: "Benchmark Stats (ms) - Metrics",
                             },
                         },
-                        cartesian: {
-                            axes: { category: { label: { rotation: 45 } } },
-                        },
                     },
                     chartContainer: chartContainerRef1.current,
                 });
@@ -171,9 +168,6 @@ const App: React.FC = () => {
                                 enabled: true,
                                 text: "Benchmark Stats (ms) - Sum",
                             },
-                        },
-                        cartesian: {
-                            axes: { category: { label: { rotation: 45 } } },
                         },
                     },
                     chartContainer: chartContainerRef2.current,
