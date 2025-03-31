@@ -79,22 +79,26 @@ export const useBenchmark = (options: UseBenchmarkHookOptions) => {
     useEffect(() => {
         if (benchmarkDef) {
             console.log(`Benchmark changed to: ${benchmarkDef.id}`);
-            
+
             // Save current historical data before switching
-            if (previousBenchmarkIdRef.current && 
-                previousBenchmarkIdRef.current !== benchmarkDef.id && 
-                historicalP99Data.length > 0) {
+            if (
+                previousBenchmarkIdRef.current &&
+                previousBenchmarkIdRef.current !== benchmarkDef.id &&
+                historicalP99Data.length > 0
+            ) {
                 const prevStorageKey = getHistoryStorageKey(previousBenchmarkIdRef.current);
                 localStorage.setItem(prevStorageKey, JSON.stringify(historicalP99Data));
-                console.log(`Saved ${historicalP99Data.length} history points for previous benchmark ${previousBenchmarkIdRef.current}`);
+                console.log(
+                    `Saved ${historicalP99Data.length} history points for previous benchmark ${previousBenchmarkIdRef.current}`
+                );
             }
-            
+
             // Load config and history for new benchmark
             setBenchmarkConfig(loadBenchmarkConfig(benchmarkDef));
             const loadedHistory = loadHistoricalData(benchmarkDef.id);
             setHistoricalP99Data(loadedHistory);
             setResults(null); // Clear results when definition changes
-            
+
             // Update ref for next change
             previousBenchmarkIdRef.current = benchmarkDef.id;
         } else {

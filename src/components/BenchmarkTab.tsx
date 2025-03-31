@@ -1,7 +1,6 @@
 import { useBenchmark } from "@/hooks/useBenchmark";
 import { useTheme } from "@/hooks/useTheme";
-import
-{
+import {
     RowData,
     // Remove unused imports
     // BenchmarkImplementation,
@@ -22,19 +21,18 @@ const DEFAULT_ITERATIONS = 100;
 const DEFAULT_MAX_HISTORY = 10;
 
 // Add localStorage keys
-const STORAGE_KEY_ITERATIONS = 'benchmark_iterations';
-const STORAGE_KEY_MAX_HISTORY = 'benchmark_max_history';
+const STORAGE_KEY_ITERATIONS = "benchmark_iterations";
+const STORAGE_KEY_MAX_HISTORY = "benchmark_max_history";
 
 // Helper functions to get/set localStorage values with defaults
-const getStoredValue = ( key: string, defaultValue: number ): number =>
-{
-    const stored = localStorage.getItem( key );
-    if ( stored ) {
+const getStoredValue = (key: string, defaultValue: number): number => {
+    const stored = localStorage.getItem(key);
+    if (stored) {
         try {
-            const value = parseInt( stored, 10 );
-            return isNaN( value ) ? defaultValue : value;
-        } catch ( e ) {
-            console.error( `Error parsing stored value for ${key}`, e );
+            const value = parseInt(stored, 10);
+            return isNaN(value) ? defaultValue : value;
+        } catch (e) {
+            console.error(`Error parsing stored value for ${key}`, e);
         }
     }
     return defaultValue;
@@ -42,50 +40,97 @@ const getStoredValue = ( key: string, defaultValue: number ): number =>
 
 type LegendPosition = "top" | "right" | "bottom" | "left";
 
-const calculateThroughput = ( sumMs: number, itemsProcessed: number ): number =>
-{
-    if ( sumMs <= 0 || itemsProcessed <= 0 ) return 0;
+const calculateThroughput = (sumMs: number, itemsProcessed: number): number => {
+    if (sumMs <= 0 || itemsProcessed <= 0) return 0;
     // Throughput: items / (total time in seconds)
-    return Math.round( itemsProcessed / ( sumMs / 1000 ) );
+    return Math.round(itemsProcessed / (sumMs / 1000));
 };
 
-export const BenchmarkTab: React.FC = () =>
-{
-    const { benchmarkId } = useParams<{ benchmarkId: string; }>();
+export const BenchmarkTab: React.FC = () => {
+    const { benchmarkId } = useParams<{ benchmarkId: string }>();
     const benchmarkDef = useMemo(
-        () => ( benchmarkId ? getBenchmarkDefinitionById( benchmarkId ) : null ),
-        [ benchmarkId ]
+        () => (benchmarkId ? getBenchmarkDefinitionById(benchmarkId) : null),
+        [benchmarkId]
     );
 
     // Load initial values from localStorage
-    const [ iterations, setIterations ] = useState( () =>
-        getStoredValue( STORAGE_KEY_ITERATIONS, DEFAULT_ITERATIONS )
+    const [iterations, setIterations] = useState(() =>
+        getStoredValue(STORAGE_KEY_ITERATIONS, DEFAULT_ITERATIONS)
     );
-    const [ maxHistoricalPoints, setMaxHistoricalPoints ] = useState( () =>
-        getStoredValue( STORAGE_KEY_MAX_HISTORY, DEFAULT_MAX_HISTORY )
+    const [maxHistoricalPoints, setMaxHistoricalPoints] = useState(() =>
+        getStoredValue(STORAGE_KEY_MAX_HISTORY, DEFAULT_MAX_HISTORY)
     );
 
     // Get implementation names and labels from benchmark definition
-    const defaultImplementations = useMemo( () =>
-    {
-        if ( !benchmarkDef ) return [];
+    const defaultImplementations = useMemo(() => {
+        if (!benchmarkDef) return [];
 
-        // This approach doesn't require directly accessing implementation from the definition
-        // Instead, we'll mock a basic structure for historical chart use
-        // Typically based on the benchmark results structure
-        return [
-            {
-                name: "protobufjs",
-                label: "ProtobufJS",
-                stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 }
-            },
-            {
-                name: "dod",
-                label: "DOD",
-                stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 }
-            }
-        ];
-    }, [ benchmarkDef ] );
+        // For binary string benchmark
+        if (benchmarkDef.id === "binaryString") {
+            return [
+                {
+                    name: "binaryLoop",
+                    label: "Binary Comparison - Loop",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "binaryEvery",
+                    label: "Binary Comparison - Every",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "onTheFlyDecoding",
+                    label: "String Comparison - On-the-Fly",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "preDecodedComparison",
+                    label: "String Comparison - Pre-Decoded",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+            ];
+        }
+
+        // For protobuf benchmark
+        if (benchmarkDef.id === "protobuf") {
+            return [
+                {
+                    name: "protobufjs",
+                    label: "ProtobufJS",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "dod",
+                    label: "DOD",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+            ];
+        }
+
+        // For loop benchmark
+        if (benchmarkDef.id === "loops") {
+            return [
+                {
+                    name: "for",
+                    label: "For Loop (indexed)",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "forOf",
+                    label: "For...of Loop",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+                {
+                    name: "forIn",
+                    label: "For...in Loop (keys)",
+                    stats: { p99: 0, min: 0, max: 0, mean: 0, median: 0, sum: 0 },
+                },
+            ];
+        }
+
+        // Fallback case - just return an empty array
+        return [];
+    }, [benchmarkDef]);
 
     const {
         results,
@@ -96,46 +141,42 @@ export const BenchmarkTab: React.FC = () =>
         handleRunBenchmarks,
         handleAutoRunToggle,
         handleBenchmarkConfigChange,
-    } = useBenchmark( {
+    } = useBenchmark({
         benchmarkDef: benchmarkDef || null,
         iterations,
         maxHistoricalPoints,
         autoRun: true,
-    } );
+    });
 
     const { myTheme, themeMode, cycleTheme } = useTheme();
 
-    const benchmarkGridRef = useRef<AgGridReact>( null );
-    const benchmarkChart1Ref = useRef<ChartRef | undefined>( undefined );
-    const benchmarkChart2Ref = useRef<ChartRef | undefined>( undefined );
+    const benchmarkGridRef = useRef<AgGridReact>(null);
+    const benchmarkChart1Ref = useRef<ChartRef | undefined>(undefined);
+    const benchmarkChart2Ref = useRef<ChartRef | undefined>(undefined);
 
     // Save iterations and maxHistoricalPoints to localStorage whenever they change
-    useEffect( () =>
-    {
-        localStorage.setItem( STORAGE_KEY_ITERATIONS, iterations.toString() );
-    }, [ iterations ] );
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_ITERATIONS, iterations.toString());
+    }, [iterations]);
 
-    useEffect( () =>
-    {
-        localStorage.setItem( STORAGE_KEY_MAX_HISTORY, maxHistoricalPoints.toString() );
-    }, [ maxHistoricalPoints ] );
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY_MAX_HISTORY, maxHistoricalPoints.toString());
+    }, [maxHistoricalPoints]);
 
     const handleGeneralConfigChange = useCallback(
-        ( newIterations: number, newMaxHistory: number ) =>
-        {
-            setIterations( newIterations );
-            setMaxHistoricalPoints( newMaxHistory );
+        (newIterations: number, newMaxHistory: number) => {
+            setIterations(newIterations);
+            setMaxHistoricalPoints(newMaxHistory);
             // localStorage persistence is handled in the useEffects above
         },
         []
     );
 
     // Prepare row data for the BenchmarkGrid (passed to BenchmarkResultsSection)
-    const benchmarkRowData: RowData[] = useMemo( () =>
-    {
-        if ( !results ) return [];
+    const benchmarkRowData: RowData[] = useMemo(() => {
+        if (!results) return [];
 
-        return results.implementations.map( impl => ( {
+        return results.implementations.map(impl => ({
             implementation: impl.label,
             min: impl.stats.min,
             max: impl.stats.max,
@@ -144,9 +185,9 @@ export const BenchmarkTab: React.FC = () =>
             p99: impl.stats.p99,
             sum: impl.stats.sum,
             // Throughput calculation now uses itemsProcessed from results
-            throughput: calculateThroughput( impl.stats.sum, results.itemsProcessed ),
-        } ) );
-    }, [ results ] );
+            throughput: calculateThroughput(impl.stats.sum, results.itemsProcessed),
+        }));
+    }, [results]);
 
     // Callback for BenchmarkResultsSection to create charts A & B
     const handleBenchmarkFirstDataRendered = useCallback(
@@ -154,12 +195,11 @@ export const BenchmarkTab: React.FC = () =>
             params: FirstDataRenderedEvent,
             chartContainer1: HTMLDivElement | null,
             chartContainer2: HTMLDivElement | null
-        ) =>
-        {
-            if ( params.api && chartContainer1 && chartContainer2 && benchmarkRowData.length > 0 ) {
-                console.log( "BenchmarkTab: Initial chart creation..." );
-                chartContainer1.innerHTML = '';
-                chartContainer2.innerHTML = '';
+        ) => {
+            if (params.api && chartContainer1 && chartContainer2 && benchmarkRowData.length > 0) {
+                console.log("BenchmarkTab: Initial chart creation...");
+                chartContainer1.innerHTML = "";
+                chartContainer2.innerHTML = "";
 
                 // Chart 1: Time Stats
                 const chart1ThemeOverrides = {
@@ -172,12 +212,14 @@ export const BenchmarkTab: React.FC = () =>
                         // series: { fill: ['#fde047', '#f97316'], strokeWidth: 0 },
                     },
                 };
-                const chart1 = params.api.createRangeChart( {
+                const chart1 = params.api.createRangeChart({
                     chartType: "groupedColumn",
-                    cellRange: { columns: [ "implementation", "min", "max", "mean", "median", "p99" ] },
+                    cellRange: {
+                        columns: ["implementation", "min", "max", "mean", "median", "p99"],
+                    },
                     chartContainer: chartContainer1,
                     chartThemeOverrides: chart1ThemeOverrides,
-                } );
+                });
                 benchmarkChart1Ref.current = chart1;
 
                 // Chart 2: Throughput
@@ -187,53 +229,52 @@ export const BenchmarkTab: React.FC = () =>
                         legend: { position: "bottom" as LegendPosition },
                     },
                 };
-                const chart2 = params.api.createRangeChart( {
+                const chart2 = params.api.createRangeChart({
                     chartType: "column",
-                    cellRange: { columns: [ "implementation", "throughput" ] },
+                    cellRange: { columns: ["implementation", "throughput"] },
                     chartContainer: chartContainer2,
                     chartThemeOverrides: chart2ThemeOverrides,
-                } );
+                });
                 benchmarkChart2Ref.current = chart2;
             }
         },
-        [ benchmarkRowData ]
+        [benchmarkRowData]
     );
 
     // Effect to UPDATE charts when data changes
-    useEffect( () =>
-    {
+    useEffect(() => {
         const gridApi = benchmarkGridRef.current?.api;
         const chart1 = benchmarkChart1Ref.current;
         const chart2 = benchmarkChart2Ref.current;
 
-        if ( gridApi && benchmarkRowData.length > 0 ) {
-            console.log( "BenchmarkTab: Updating charts with new data..." );
+        if (gridApi && benchmarkRowData.length > 0) {
+            console.log("BenchmarkTab: Updating charts with new data...");
             const cellRangeParams = {
                 rowStartIndex: 0,
                 rowEndIndex: benchmarkRowData.length - 1,
             };
 
             // Update Chart 1 (Time Stats)
-            if ( chart1 ) {
-                gridApi.updateChart( {
+            if (chart1) {
+                gridApi.updateChart({
                     chartId: chart1.chartId,
                     type: "rangeChartUpdate",
                     cellRange: {
                         ...cellRangeParams,
-                        columns: [ "implementation", "min", "max", "mean", "median", "p99" ],
+                        columns: ["implementation", "min", "max", "mean", "median", "p99"],
                     },
-                } );
+                });
             }
             // Update Chart 2 (Throughput)
-            if ( chart2 ) {
-                gridApi.updateChart( {
+            if (chart2) {
+                gridApi.updateChart({
                     chartId: chart2.chartId,
                     type: "rangeChartUpdate",
                     cellRange: {
                         ...cellRangeParams,
-                        columns: [ "implementation", "throughput" ],
+                        columns: ["implementation", "throughput"],
                     },
-                } );
+                });
             }
         } else {
             // Optional: Clear charts if data becomes empty
@@ -242,14 +283,13 @@ export const BenchmarkTab: React.FC = () =>
             // benchmarkChart1Ref.current = null;
             // benchmarkChart2Ref.current = null;
         }
-
-    }, [ benchmarkRowData ] );
+    }, [benchmarkRowData]);
 
     // Callback for HistoricalDataSection (might not be needed if handled internally)
     // const handleHistoricalFirstDataRendered = useCallback(...);
 
-    if ( !benchmarkDef ) {
-        return <div>Benchmark with ID '{ benchmarkId }' not found.</div>;
+    if (!benchmarkDef) {
+        return <div>Benchmark with ID '{benchmarkId}' not found.</div>;
     }
 
     const ConfigComponent = benchmarkDef.ConfigComponent;
@@ -257,35 +297,35 @@ export const BenchmarkTab: React.FC = () =>
     return (
         <div className="benchmark-tab">
             <Navbar
-                iterations={ iterations }
-                maxHistoricalPoints={ maxHistoricalPoints }
-                onConfigChange={ handleGeneralConfigChange }
-                onRunBenchmarks={ handleRunBenchmarks }
-                onAutoRunToggle={ handleAutoRunToggle }
-                loading={ loading }
-                autoRun={ autoRun }
-                cycleTheme={ cycleTheme }
-                currentTheme={ themeMode }
-                ConfigComponent={ ConfigComponent }
-                benchmarkConfig={ benchmarkConfig }
-                onBenchmarkConfigChange={ handleBenchmarkConfigChange }
+                iterations={iterations}
+                maxHistoricalPoints={maxHistoricalPoints}
+                onConfigChange={handleGeneralConfigChange}
+                onRunBenchmarks={handleRunBenchmarks}
+                onAutoRunToggle={handleAutoRunToggle}
+                loading={loading}
+                autoRun={autoRun}
+                cycleTheme={cycleTheme}
+                currentTheme={themeMode}
+                ConfigComponent={ConfigComponent}
+                benchmarkConfig={benchmarkConfig}
+                onBenchmarkConfigChange={handleBenchmarkConfigChange}
             />
 
-            {/* Use the new section components */ }
+            {/* Use the new section components */}
             <BenchmarkResultsSection
-                ref={ benchmarkGridRef }
-                rowData={ benchmarkRowData }
-                onFirstDataRendered={ handleBenchmarkFirstDataRendered }
-                theme={ myTheme }
-                currentTheme={ themeMode }
+                ref={benchmarkGridRef}
+                rowData={benchmarkRowData}
+                onFirstDataRendered={handleBenchmarkFirstDataRendered}
+                theme={myTheme}
+                currentTheme={themeMode}
             />
 
             <HistoricalDataSection
-                historicalData={ historicalP99Data }
+                historicalData={historicalP99Data}
                 // Use implementations from results if available, otherwise use default from benchmark definition
-                implementations={ results?.implementations ?? defaultImplementations }
-                theme={ myTheme }
-                currentTheme={ themeMode }
+                implementations={results?.implementations ?? defaultImplementations}
+                theme={myTheme}
+                currentTheme={themeMode}
             />
         </div>
     );

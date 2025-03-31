@@ -94,43 +94,118 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
                 "HistoricalGrid onFirstDataRendered called. Implementations:",
                 implementations
             );
+
+            // Only create chart if we have the necessary elements and data
             if (
                 params.api &&
                 chartContainerRef3.current &&
                 Array.isArray(implementations) &&
-                implementations.length > 0
+                implementations.length > 0 &&
+                rowData.length > 0 // Ensure we have data points
             ) {
-                console.log("HistoricalGrid: Creating chart...");
-                lineChartRef.current = params.api.createRangeChart({
-                    chartType: "area",
-                    cellRange: {
-                        columns: ["time", ...implementations.map(impl => impl.name)],
-                        rowStartIndex: 0,
-                        rowEndIndex: rowData ? rowData.length - 1 : 0,
-                    },
-                    chartThemeOverrides: {
-                        common: {
-                            title: {
-                                enabled: true,
-                                text: "p99 metrics over time",
-                            },
-                            legend: {
-                                position: "bottom",
-                            },
-                            padding: {
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20,
+                try {
+                    console.log("HistoricalGrid: Creating chart...");
+
+                    // Clear any existing chart
+                    chartContainerRef3.current.innerHTML = "";
+
+                    // Make sure we have valid columns
+                    const validColumns = [
+                        "time",
+                        ...implementations
+                            .filter(impl => impl && impl.name) // Filter out any undefined implementations
+                            .map(impl => impl.name),
+                    ];
+
+                    lineChartRef.current = params.api.createRangeChart({
+                        chartType: "area",
+                        cellRange: {
+                            columns: validColumns,
+                            rowStartIndex: 0,
+                            rowEndIndex: Math.max(0, rowData.length - 1),
+                        },
+                        chartThemeOverrides: {
+                            common: {
+                                title: {
+                                    enabled: true,
+                                    text: "p99 metrics over time",
+                                },
+                                legend: {
+                                    position: "bottom",
+                                },
+                                padding: {
+                                    top: 20,
+                                    right: 20,
+                                    bottom: 20,
+                                    left: 20,
+                                },
                             },
                         },
-                    },
-                    chartContainer: chartContainerRef3.current,
-                });
+                        chartContainer: chartContainerRef3.current,
+                    });
+
+                    console.log("HistoricalGrid: Chart successfully created");
+                } catch (error) {
+                    console.error("Error creating historical chart:", error);
+                    // Clear the chart container on error
+                    if (chartContainerRef3.current) {
+                        chartContainerRef3.current.innerHTML = "";
+                    }
+                    lineChartRef.current = undefined;
+                }
+            } else {
+                console.log(
+                    "HistoricalGrid: Not creating chart due to missing data or implementations"
+                );
             }
         },
         [chartContainerRef3, rowData, implementations]
     );
+
+    // Update grid data when historical data changes
+    useEffect(() => {
+        if (gridRef.current?.api) {
+            // Update the grid data
+            gridRef.current.api.applyTransaction({
+                update: rowData,
+            });
+
+            // Only update chart if we have both the chart reference and data
+            if (lineChartRef.current && rowData.length > 0 && implementations.length > 0) {
+                try {
+                    console.log("HistoricalGrid: Updating chart with new data...", {
+                        chartId: lineChartRef.current.chartId,
+                        rowCount: rowData.length,
+                    });
+
+                    // Make sure we have valid column data
+                    const validColumns = [
+                        "time",
+                        ...implementations
+                            .filter(impl => impl && impl.name) // Filter out any undefined implementations
+                            .map(impl => impl.name),
+                    ];
+
+                    gridRef.current.api.updateChart({
+                        chartId: lineChartRef.current.chartId,
+                        type: "rangeChartUpdate",
+                        cellRange: {
+                            columns: validColumns,
+                            rowStartIndex: 0,
+                            rowEndIndex: Math.max(0, rowData.length - 1),
+                        },
+                    });
+                } catch (error) {
+                    console.error("Error updating historical chart:", error);
+                    // If updating fails, recreate the chart
+                    if (chartContainerRef3.current && gridRef.current.api) {
+                        chartContainerRef3.current.innerHTML = "";
+                        onFirstDataRendered({ api: gridRef.current.api } as FirstDataRenderedEvent);
+                    }
+                }
+            }
+        }
+    }, [rowData, implementations, onFirstDataRendered]);
 
     return (
         <>
