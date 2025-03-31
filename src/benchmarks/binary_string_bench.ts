@@ -148,11 +148,11 @@ async function runBinaryStringBenchmark(
                 label: "String Comparison - On-the-Fly Decode",
                 stats: statsOnTheFlyDecoding,
             },
-            {
-                name: "preDecodedComparison",
-                label: "String Comparison - Pre-Decoded",
-                stats: statsPreDecodedComparison,
-            },
+            // {
+            //     name: "preDecodedComparison",
+            //     label: "String Comparison - Pre-Decoded",
+            //     stats: statsPreDecodedComparison,
+            // },
         ],
         // Each iteration processes the internalIterations, multiplied by the number of bytes
         // in the comparison strings
