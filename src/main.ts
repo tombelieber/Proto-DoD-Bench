@@ -1,4 +1,4 @@
-import { BenchmarkResults } from "./BenchmarkResults";
+import { BenchmarkResults } from "./types";
 import { MyModel } from "./MyModel";
 import { MyModelDODStore } from "./MyModelDODStore";
 import { NUM_MESSAGES, ITERATIONS } from "./NUM_MESSAGES";
@@ -142,7 +142,17 @@ export async function runBenchmarks(type: BenchmarkType = 'protobuf'): Promise<B
     console.log("Protobufjs decode stats (ms):", statsPB);
 
     return {
-        dod: statsDOD,
-        protobufjs: statsPB,
+        implementations: [
+            {
+                name: 'protobufjs',
+                label: 'ProtobufJS',
+                stats: statsPB,
+            },
+            {
+                name: 'dod',
+                label: 'DOD',
+                stats: statsDOD,
+            },
+        ],
     };
 }

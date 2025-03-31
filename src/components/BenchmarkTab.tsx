@@ -2,11 +2,15 @@ import React, { useRef, useCallback, useMemo } from 'react';
 import { FirstDataRenderedEvent } from 'ag-grid-community';
 import { BenchmarkGrid } from './BenchmarkGrid';
 import { HistoricalGrid } from './HistoricalGrid';
-import { RowData } from '../types';
+import { RowData, BenchmarkImplementation, HistoricalP99Data } from '../types';
 import { useBenchmark } from '../hooks/useBenchmark';
 import { BenchmarkType } from '../main';
 import { useTheme } from '../hooks/useTheme';
 import { Navbar } from './Navbar';
+import { NUM_MESSAGES } from '../NUM_MESSAGES';
+
+// Define the allowed legend positions
+type LegendPosition = 'top' | 'right' | 'bottom' | 'left';
 
 interface BenchmarkTabProps
 {
@@ -14,6 +18,54 @@ interface BenchmarkTabProps
   autoRun?: boolean;
   interval?: number;
 }
+
+const DEFAULT_IMPLEMENTATIONS: BenchmarkImplementation[] = [
+  {
+    name: 'protobufjs',
+    label: 'ProtobufJS',
+    stats: {
+      min: 0,
+      max: 0,
+      mean: 0,
+      median: 0,
+      p99: 0,
+      sum: 0,
+    }
+  },
+  {
+    name: 'dod',
+    label: 'DOD',
+    stats: {
+      min: 0,
+      max: 0,
+      mean: 0,
+      median: 0,
+      p99: 0,
+      sum: 0,
+    }
+  }
+];
+
+const getEmptyResults = () => ( {
+  implementations: DEFAULT_IMPLEMENTATIONS
+} );
+
+const getEmptyHistoricalData = (): HistoricalP99Data =>
+{
+  const data: HistoricalP99Data = { time: new Date().toLocaleTimeString() };
+  DEFAULT_IMPLEMENTATIONS.forEach( impl =>
+  {
+    data[ impl.name ] = 0;
+  } );
+  return data;
+};
+
+// Calculate throughput in messages per second
+const calculateThroughput = ( sumMs: number ) =>
+{
+  if ( sumMs === 0 ) return 0;
+  return Math.round( ( NUM_MESSAGES / sumMs ) * 1000 ); // Convert ms to seconds
+};
 
 export const BenchmarkTab: React.FC<BenchmarkTabProps> = ( { type, autoRun = true, interval = 1000 } ) =>
 {
@@ -31,105 +83,90 @@ export const BenchmarkTab: React.FC<BenchmarkTabProps> = ( { type, autoRun = tru
   const chartContainerRef1 = useRef<HTMLDivElement>( null );
   const chartContainerRef2 = useRef<HTMLDivElement>( null );
 
-  // Prepare row data as numbers.
+  // Prepare row data for the pivoted grid.
   const rowData: RowData[] = useMemo( () =>
   {
-    if ( !results ) return [];
-    return [
-      {
-        metric: "Min",
-        protobufjs: results.protobufjs.min,
-        dod: results.dod.min,
-      },
-      {
-        metric: "Max",
-        protobufjs: results.protobufjs.max,
-        dod: results.dod.max,
-      },
-      {
-        metric: "Mean",
-        protobufjs: results.protobufjs.mean,
-        dod: results.dod.mean,
-      },
-      {
-        metric: "Median (p50)",
-        protobufjs: results.protobufjs.median,
-        dod: results.dod.median,
-      },
-      {
-        metric: "p99",
-        protobufjs: results.protobufjs.p99,
-        dod: results.dod.p99,
-      },
-      {
-        metric: "Sum",
-        protobufjs: results.protobufjs.sum,
-        dod: results.dod.sum,
-      },
-    ];
-  }, [ results ] );
+    const benchmarkResults = type === 'protobuf' ? results : getEmptyResults();
+    if ( !benchmarkResults ) return [];
 
-  // When grid data is rendered, automatically create charts.
+    return benchmarkResults.implementations.map( impl => ( {
+      implementation: impl.label, // Use the label for display
+      min: impl.stats.min,
+      max: impl.stats.max,
+      mean: impl.stats.mean,
+      median: impl.stats.median,
+      p99: impl.stats.p99,
+      sum: impl.stats.sum,
+      throughput: calculateThroughput( impl.stats.sum ),
+    } ) );
+  }, [ results, type ] );
+
+  // Adjust chart creation for pivoted data.
   const onFirstDataRendered = useCallback( ( params: FirstDataRenderedEvent ) =>
   {
     if ( params.api && chartContainerRef1.current && chartContainerRef2.current ) {
-      // Chart 1: rows 0-4 (all metrics except "Sum")
-      params.api.createRangeChart( {
-        chartType: "groupedColumn",
-        cellRange: {
-          columns: [ "metric", "protobufjs", "dod" ],
-          rowStartIndex: 0,
-          rowEndIndex: 4,
-        },
-        chartThemeOverrides: {
-          common: {
-            title: {
-              enabled: true,
-              text: "Benchmark Stats (ms) - Metrics",
-            },
-            legend: {
-              position: "bottom",
-            },
-            padding: {
-              top: 20,
-              right: 20,
-              bottom: 20,
-              left: 20,
-            },
+      const currentGridData = rowData; // Use the data already calculated for the grid
+
+      // --- Chart 1: Time Stats (Implementations as categories, Metrics as series) ---
+      // Select columns from the grid data to create the side-by-side comparison
+      const chart1ThemeOverrides = {
+        common: {
+          title: {
+            enabled: true,
+            text: "Benchmark Time Stats (ms)",
           },
+          legend: {
+            position: "bottom" as LegendPosition,
+          },
+          padding: {
+            top: 20, right: 20, bottom: 20, left: 20,
+          },
+        },
+      };
+
+      params.api.createRangeChart( {
+        chartType: 'groupedColumn',
+        cellRange: {
+          // Select the implementation column and the metric columns
+          columns: [ "implementation", "min", "max", "mean", "median", "p99" ],
+          rowStartIndex: 0,
+          rowEndIndex: currentGridData.length - 1,
         },
         chartContainer: chartContainerRef1.current,
+        chartThemeOverrides: chart1ThemeOverrides,
+        // AG Grid automatically groups by the first column ('implementation')
+        // and creates series for the other selected columns ('min', 'max', etc.)
       } );
 
-      // Chart 2: row 5 ("Sum")
-      params.api.createRangeChart( {
-        chartType: "groupedColumn",
-        cellRange: {
-          columns: [ "metric", "protobufjs", "dod" ],
-          rowStartIndex: 5,
-          rowEndIndex: 5,
-        },
-        chartThemeOverrides: {
-          common: {
-            title: {
-              enabled: true,
-              text: "Benchmark Stats (ms) - Sum",
-            },
-            legend: {
-              position: "bottom",
-            },
-            padding: {
-              top: 20,
-              right: 20,
-              bottom: 20,
-              left: 20,
-            },
+      // --- Chart 2: Throughput --- (Keep as is)
+      const chart2ThemeOverrides = {
+        common: {
+          title: {
+            enabled: true,
+            text: "Throughput (messages/second)",
+          },
+          legend: {
+            position: "bottom" as LegendPosition,
+          },
+          padding: {
+            top: 20, right: 20, bottom: 20, left: 20,
           },
         },
+      };
+      params.api.createRangeChart( {
+        chartType: "groupedBar",
+        cellRange: {
+          columns: [ "implementation", "throughput" ],
+          rowStartIndex: 0,
+          rowEndIndex: currentGridData.length - 1,
+        },
         chartContainer: chartContainerRef2.current,
+        chartThemeOverrides: chart2ThemeOverrides,
       } );
     }
-  }, [] );
+  }, [ results, type, rowData ] );
+
+  const displayHistoricalData = type === 'protobuf' ? historicalP99Data : [ getEmptyHistoricalData() ];
 
   return (
     <div className="benchmark-tab">
@@ -140,12 +177,12 @@ export const BenchmarkTab: React.FC<BenchmarkTabProps> = ( { type, autoRun = tru
         onRunBenchmarks={ handleRunBenchmarks }
         onAutoRunToggle={ handleAutoRunToggle }
         onThemeToggle={ cycleTheme }
-        showBenchmarkControls
+        showBenchmarkControls={ type === 'protobuf' }
       />
       <div className="top-section">
         <BenchmarkGrid
           rowData={ rowData }
-          onGridReady={ handleRunBenchmarks }
+          onGridReady={ type === 'protobuf' ? handleRunBenchmarks : undefined }
           onFirstDataRendered={ onFirstDataRendered }
           theme={ myTheme }
           currentTheme={ currentTheme }
@@ -158,9 +195,10 @@ export const BenchmarkTab: React.FC<BenchmarkTabProps> = ( { type, autoRun = tru
 
       <div className="bottom-section">
         <HistoricalGrid
-          rowData={ historicalP99Data }
+          rowData={ displayHistoricalData }
           theme={ myTheme }
           currentTheme={ currentTheme }
+          implementations={ DEFAULT_IMPLEMENTATIONS }
         />
       </div>
     </div>

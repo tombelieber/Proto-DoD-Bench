@@ -26,11 +26,12 @@ export const useBenchmark = (options: UseBenchmarkOptions) => {
         setResults(res);
 
         const now = new Date().toLocaleTimeString();
-        const newData: HistoricalP99Data = {
-            time: now,
-            protobufjs: res.protobufjs.p99,
-            dod: res.dod.p99,
-        };
+        const newData: HistoricalP99Data = { time: now };
+
+        // Dynamically add p99 stats for each implementation
+        res.implementations.forEach(impl => {
+            newData[impl.name] = impl.stats.p99;
+        });
 
         setHistoricalP99Data(prev => {
             const updated = [...prev, newData];

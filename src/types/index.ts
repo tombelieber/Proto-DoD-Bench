@@ -7,21 +7,30 @@ export interface BenchmarkStats {
     sum: number;
 }
 
+export type BenchmarkImplementation = {
+    name: string;
+    label: string;
+    stats: BenchmarkStats;
+};
+
 export interface BenchmarkResults {
-    protobufjs: BenchmarkStats;
-    dod: BenchmarkStats;
+    implementations: BenchmarkImplementation[];
 }
 
 export interface RowData {
-    metric: string;
-    protobufjs: number;
-    dod: number;
+    implementation: string; // e.g., 'ProtobufJS', 'DOD'
+    min: number;
+    max: number;
+    mean: number;
+    median: number;
+    p99: number;
+    sum: number;
+    throughput: number; // Messages per second
 }
 
 export interface HistoricalP99Data {
     time: string;
-    protobufjs: number;
-    dod: number;
+    [key: string]: number | string; // Allow dynamic implementation keys
 }
 
 export type ThemeMode = "light" | "dark" | "system";

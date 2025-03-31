@@ -1,82 +1,80 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ChartRef, ColDef, FirstDataRenderedEvent, Theme } from "ag-grid-community";
-import { HistoricalP99Data } from "../types";
+import { ChartRef, ColDef, FirstDataRenderedEvent, Theme, ValueFormatterParams } from "ag-grid-community";
+import { HistoricalP99Data, BenchmarkImplementation } from "../types";
 
-interface HistoricalGridProps {
+interface HistoricalGridProps
+{
     rowData: HistoricalP99Data[];
     theme: Theme;
     currentTheme: string;
+    implementations: BenchmarkImplementation[];
 }
 
-export const HistoricalGrid: React.FC<HistoricalGridProps> = ({ rowData, theme, currentTheme }) => {
-    const gridRef = useRef<AgGridReact>(null);
-    const chartContainerRef3 = useRef<HTMLDivElement>(null);
+export const HistoricalGrid: React.FC<HistoricalGridProps> = ( {
+    rowData,
+    theme,
+    currentTheme,
+    implementations,
+} ) =>
+{
+    const gridRef = useRef<AgGridReact>( null );
+    const chartContainerRef3 = useRef<HTMLDivElement>( null );
     const columnDefs: ColDef<HistoricalP99Data>[] = useMemo(
         () => [
-            {
-                headerName: "Time",
-                field: "time",
-                flex: 1,
-                sort: "desc",
-                type: "dateColumn",
-            },
-            {
-                headerName: "ProtobufJS p99 metrics(ms)",
-                field: "protobufjs",
+            { headerName: "Time", field: "time", flex: 1 },
+            ...implementations.map( impl => ( {
+                headerName: `${impl.label} p99 (ms)`,
+                field: impl.name,
                 type: "numericColumn",
                 flex: 1,
-            },
-            {
-                headerName: "DOD p99 metrics(ms)",
-                field: "dod",
-                type: "numericColumn",
-                flex: 1,
-            },
+                valueFormatter: ( params: ValueFormatterParams ) => params.value.toFixed( 2 ),
+            } ) ),
         ],
-        []
+        [ implementations ]
     );
 
-    const lineChartRef = useRef<ChartRef>(undefined);
+    const lineChartRef = useRef<ChartRef>( undefined );
 
     const defaultColDef: ColDef = useMemo(
-        () => ({
-            enableValue: true,
+        () => ( {
             sortable: true,
             filter: true,
             resizable: true,
-        }),
+        } ),
         []
     );
 
     // Update grid data when historical data changes
-    useEffect(() => {
-        if (gridRef.current?.api) {
-            gridRef.current.api.applyTransaction({
+    useEffect( () =>
+    {
+        if ( gridRef.current?.api ) {
+            gridRef.current.api.applyTransaction( {
                 update: rowData,
-            });
+            } );
             // * update chart cellRange
-            if (lineChartRef.current) {
-                gridRef.current.api.updateChart({
+            if ( lineChartRef.current ) {
+                gridRef.current.api.updateChart( {
                     chartId: lineChartRef.current.chartId,
                     type: "rangeChartUpdate",
                     cellRange: {
                         rowStartIndex: 0,
                         rowEndIndex: rowData.length - 1,
                     },
-                });
+                } );
             }
         }
-    }, [rowData]);
+    }, [ rowData ] );
 
     // When historical grid data is rendered, create the line chart
     const onFirstDataRendered = useCallback(
-        (params: FirstDataRenderedEvent) => {
-            if (params.api && chartContainerRef3.current) {
-                lineChartRef.current = params.api.createRangeChart({
+        ( params: FirstDataRenderedEvent ) =>
+        {
+            if ( params.api && chartContainerRef3.current ) {
+                lineChartRef.current = params.api.createRangeChart( {
                     chartType: "area",
                     cellRange: {
-                        columns: ["time", "protobufjs", "dod"],
+                        columns: [ "time", ...implementations.map( impl => impl.name ) ],
                         rowStartIndex: 0,
                         rowEndIndex: rowData.length - 1,
                     },
@@ -98,30 +96,30 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({ rowData, theme, 
                         },
                     },
                     chartContainer: chartContainerRef3.current,
-                });
+                } );
             }
         },
-        [chartContainerRef3, rowData]
+        [ chartContainerRef3, rowData, implementations ]
     );
 
     return (
         <>
             <div
-                className={`grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"}`}
+                className={ `grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"}` }
             >
                 <AgGridReact
-                    ref={gridRef}
-                    rowData={rowData}
-                    columnDefs={columnDefs}
-                    defaultColDef={defaultColDef}
-                    enableCharts={true}
+                    ref={ gridRef }
+                    rowData={ rowData }
+                    columnDefs={ columnDefs }
+                    defaultColDef={ defaultColDef }
+                    enableCharts={ true }
                     cellSelection
-                    onFirstDataRendered={onFirstDataRendered}
-                    theme={theme}
-                    chartThemes={[currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid"]}
+                    onFirstDataRendered={ onFirstDataRendered }
+                    theme={ theme }
+                    chartThemes={ [ currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid" ] }
                 />
             </div>
-            <div ref={chartContainerRef3} className="chart" />
+            <div ref={ chartContainerRef3 } className="chart" />
         </>
     );
 };
