@@ -5,34 +5,36 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import "./App.css";
 import { BenchmarkTab } from "./components/BenchmarkTab";
-import { benchmarkDefinitions, getBenchmarkDefinitionById } from "./benchmarks";
+import { benchmarkDefinitions } from "./benchmarks";
 
 // Register enterprise modules.
-ModuleRegistry.registerModules([
-    IntegratedChartsModule.with(AgChartsEnterpriseModule),
+ModuleRegistry.registerModules( [
     AllEnterpriseModule,
-]);
+    IntegratedChartsModule.with( AgChartsEnterpriseModule ),
+] );
 
-const TabNavigation: React.FC = () => {
+const TabNavigation: React.FC = () =>
+{
     const location = useLocation();
 
     return (
         <div className="tab-navigation">
-            {benchmarkDefinitions.map(def => (
+            { benchmarkDefinitions.map( def => (
                 <Link
-                    key={def.id}
-                    to={`/benchmark/${def.id}`}
-                    className={`tab-button ${location.pathname === `/benchmark/${def.id}` ? "active" : ""}`}
+                    key={ def.id }
+                    to={ `/benchmark/${def.id}` }
+                    className={ `tab-button ${location.pathname === `/benchmark/${def.id}` ? "active" : ""}` }
                 >
-                    {def.label}
+                    { def.label }
                 </Link>
-            ))}
+            ) ) }
         </div>
     );
 };
 
-const App: React.FC = () => {
-    const defaultBenchmarkId = benchmarkDefinitions.length > 0 ? benchmarkDefinitions[0].id : null;
+const App: React.FC = () =>
+{
+    const defaultBenchmarkId = benchmarkDefinitions.length > 0 ? benchmarkDefinitions[ 0 ].id : null;
 
     return (
         <BrowserRouter>
@@ -47,7 +49,7 @@ const App: React.FC = () => {
                                     element={
                                         defaultBenchmarkId ? (
                                             <Navigate
-                                                to={`/benchmark/${defaultBenchmarkId}`}
+                                                to={ `/benchmark/${defaultBenchmarkId}` }
                                                 replace
                                             />
                                         ) : (
@@ -55,7 +57,7 @@ const App: React.FC = () => {
                                         )
                                     }
                                 />
-                                <Route path="/benchmark/:benchmarkId" element={<BenchmarkTab />} />
+                                <Route path="/benchmark/:benchmarkId" element={ <BenchmarkTab /> } />
                             </Routes>
                         </div>
                     </div>
