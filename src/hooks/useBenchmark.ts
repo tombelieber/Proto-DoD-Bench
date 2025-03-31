@@ -19,6 +19,7 @@ const loadHistoricalData = (benchmarkId: string): HistoricalP99Data[] => {
         try {
             const parsed = JSON.parse(savedData);
             if (Array.isArray(parsed)) {
+                console.log(`Loaded ${parsed.length} historical data points for ${benchmarkId}`);
                 return parsed;
             }
         } catch (e) {
@@ -28,6 +29,7 @@ const loadHistoricalData = (benchmarkId: string): HistoricalP99Data[] => {
             );
         }
     }
+    console.log(`No historical data found for ${benchmarkId}, returning empty array`);
     return [];
 };
 
@@ -71,19 +73,36 @@ export const useBenchmark = (options: UseBenchmarkHookOptions) => {
     const [autoRun, setAutoRun] = useState(initialAutoRun);
     const intervalRef = useRef<number | null>(null);
     const [historicalP99Data, setHistoricalP99Data] = useState<HistoricalP99Data[]>([]);
+    const previousBenchmarkIdRef = useRef<string | null>(null);
 
     // Effect to load config and history when the benchmark definition changes
     useEffect(() => {
         if (benchmarkDef) {
             console.log(`Benchmark changed to: ${benchmarkDef.id}`);
+            
+            // Save current historical data before switching
+            if (previousBenchmarkIdRef.current && 
+                previousBenchmarkIdRef.current !== benchmarkDef.id && 
+                historicalP99Data.length > 0) {
+                const prevStorageKey = getHistoryStorageKey(previousBenchmarkIdRef.current);
+                localStorage.setItem(prevStorageKey, JSON.stringify(historicalP99Data));
+                console.log(`Saved ${historicalP99Data.length} history points for previous benchmark ${previousBenchmarkIdRef.current}`);
+            }
+            
+            // Load config and history for new benchmark
             setBenchmarkConfig(loadBenchmarkConfig(benchmarkDef));
-            setHistoricalP99Data(loadHistoricalData(benchmarkDef.id));
+            const loadedHistory = loadHistoricalData(benchmarkDef.id);
+            setHistoricalP99Data(loadedHistory);
             setResults(null); // Clear results when definition changes
+            
+            // Update ref for next change
+            previousBenchmarkIdRef.current = benchmarkDef.id;
         } else {
             // Handle case where no benchmark is selected
             setBenchmarkConfig({});
             setHistoricalP99Data([]);
             setResults(null);
+            previousBenchmarkIdRef.current = null;
         }
     }, [benchmarkDef]);
 
@@ -167,11 +186,12 @@ export const useBenchmark = (options: UseBenchmarkHookOptions) => {
         // Add benchmarkDef dependency here
     }, [autoRun, handleRunBenchmarks, interval, benchmarkDef]);
 
-    // --- Save History Logic (remains similar, uses benchmark ID) ---
+    // --- Save History Logic ---
     useEffect(() => {
-        if (benchmarkDef) {
+        if (benchmarkDef && historicalP99Data.length > 0) {
             const storageKey = getHistoryStorageKey(benchmarkDef.id);
             localStorage.setItem(storageKey, JSON.stringify(historicalP99Data));
+            console.log(`Saved ${historicalP99Data.length} history points for ${benchmarkDef.id}`);
         }
     }, [historicalP99Data, benchmarkDef]);
 

@@ -13,4 +13,12 @@ export default defineConfig({
     css: {
         postcss: "./postcss.config.js",
     },
+    esbuild: {
+        logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    },
+    optimizeDeps: {
+        esbuildOptions: {
+            target: 'es2020'
+        }
+    },
 });
