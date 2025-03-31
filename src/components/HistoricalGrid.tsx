@@ -3,6 +3,9 @@ import { AgGridReact } from "ag-grid-react";
 import { ChartRef, ColDef, FirstDataRenderedEvent, Theme, ValueFormatterParams } from "ag-grid-community";
 import { HistoricalP99Data, BenchmarkImplementation } from "../types";
 
+// Add status bar CSS import
+// import 'ag-grid-enterprise/styles/ag-status-bar.css';
+
 interface HistoricalGridProps
 {
     rowData: HistoricalP99Data[];
@@ -44,6 +47,19 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ( {
         } ),
         []
     );
+
+    // Add status bar config
+    const statusBar = useMemo( () =>
+    {
+        return {
+            statusPanels: [
+                {
+                    statusPanel: 'agTotalRowCountComponent',
+                    align: 'left',
+                },
+            ],
+        };
+    }, [] );
 
     // Update grid data when historical data changes
     useEffect( () =>
@@ -117,6 +133,7 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ( {
                     onFirstDataRendered={ onFirstDataRendered }
                     theme={ theme }
                     chartThemes={ [ currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid" ] }
+                    statusBar={ statusBar }
                 />
             </div>
             <div ref={ chartContainerRef3 } className="chart" />

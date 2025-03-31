@@ -3,6 +3,9 @@ import { AgGridReact } from "ag-grid-react";
 import { ColDef, FirstDataRenderedEvent, Theme, ValueFormatterParams } from "ag-grid-community";
 import { RowData } from "../types";
 
+// Add status bar CSS import
+// import 'ag-grid-enterprise/styles/ag-status-bar.css';
+
 interface BenchmarkGridProps
 {
     rowData: RowData[];
@@ -73,6 +76,19 @@ export const BenchmarkGrid: React.FC<BenchmarkGridProps> = ( {
         []
     );
 
+    // Add status bar config
+    const statusBar = useMemo( () =>
+    {
+        return {
+            statusPanels: [
+                {
+                    statusPanel: 'agTotalRowCountComponent',
+                    align: 'left',
+                },
+            ],
+        };
+    }, [] );
+
     return (
         <div className={ `grid-container ag-theme-${currentTheme === "dark" ? "dark" : "alpine"}` }>
             <AgGridReact
@@ -85,6 +101,7 @@ export const BenchmarkGrid: React.FC<BenchmarkGridProps> = ( {
                 onFirstDataRendered={ onFirstDataRendered }
                 theme={ theme }
                 chartThemes={ [ currentTheme === "dark" ? "ag-vivid-dark" : "ag-vivid" ] }
+                statusBar={ statusBar }
             />
         </div>
     );

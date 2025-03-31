@@ -1,10 +1,6 @@
-import { BenchmarkResults } from "../types";
-import { MyModel } from "../MyModel";
-import { MyModelDODStore } from "../MyModelDODStore";
-import { NUM_MESSAGES, ITERATIONS } from "../NUM_MESSAGES";
-
-// const NUM_MESSAGES = 1e6; // 1 million messages
-// const ITERATIONS = 100;
+import { MyModel } from "@/MyModel";
+import { MyModelDODStore } from "@/MyModelDODStore";
+import { BenchmarkResults } from "@/types";
 
 interface MyModelData {
     id: number;
@@ -15,14 +11,14 @@ interface MyModelData {
  * Generates an array of binary messages and their original data,
  * with random values for each iteration.
  */
-function generateBinaryData(): {
+function generateBinaryData(numMessages: number): {
     protobufjsMessages: Uint8Array[];
     originalData: MyModelData[];
 } {
     const protobufjsMessages: Uint8Array[] = [];
     const originalData: MyModelData[] = [];
 
-    for (let i = 0; i < NUM_MESSAGES; i++) {
+    for (let i = 0; i < numMessages; i++) { // Use arg
         // Generate a random value (for example, between 1.0 and 100.0)
         const msg = {
             id: i,
@@ -37,6 +33,8 @@ function generateBinaryData(): {
     return { protobufjsMessages, originalData };
 }
 
+// ... (decode functions remain the same) ...
+
 /**
  * Decodes all messages using protobufjs (static decode).
  */
@@ -47,6 +45,7 @@ function decodeWithProtobufjs(binaryData: Uint8Array[]): MyModel[] {
     }
     return res;
 }
+
 // Preallocate a 20MB target buffer.
 const TARGET_SIZE = 20 * 1024 * 1024; // 20 MB in bytes.
 // Preallocate a store with 20MB of buffer space.
@@ -63,6 +62,7 @@ function decodeWithDOD(binaryData: Uint8Array[]): {
     return dodStore.decodeFromList(binaryData);
 }
 
+
 /**
  * Computes statistics from an array of numbers.
  */
@@ -77,44 +77,25 @@ function computeStats(times: number[]) {
     return { sum, mean, median, p99, min: sorted[0], max: sorted[n - 1] };
 }
 
-// /**
-//  * Runs the given decode function ITERATIONS times and returns an array of timings.
-//  * In each iteration, it generates new random binary messages.
-//  */
-// async function runBenchmark(
-//     fn: (binaryData: Uint8Array[]) => void,
-//     name: string,
-// ): Promise<number[]> {
-//     const times: number[] = [];
-//     for (let i = 0; i < ITERATIONS; i++) {
-//         // Generate new random messages for this iteration.
-//         const { protobufjsMessages } = generateBinaryData();
-//         const start = performance.now();
-//         fn(protobufjsMessages);
-//         const end = performance.now();
-//         times.push(end - start);
-//     }
-//     console.debug(
-//         `Benchmark ${name}`,
-//         fn(generateBinaryData().protobufjsMessages),
-//     );
-//     return times;
-// }
-
 export type BenchmarkType = 'protobuf' | 'json' | 'custom';
 
-export async function runBenchmarks(type: BenchmarkType = 'protobuf'): Promise<BenchmarkResults> {
-    console.log(`Starting ${type} benchmarks...`);
+// Update function signature to accept config
+export async function runBenchmarks(
+    type: BenchmarkType = 'protobuf',
+    numMessages: number,
+    iterations: number
+): Promise<BenchmarkResults> {
+    console.log(`Starting ${type} benchmarks with ${numMessages} messages, ${iterations} iterations...`);
     // Generate a snapshot to log the number of messages (this is optional)
-    const { protobufjsMessages: initialMessages } = generateBinaryData();
+    const { protobufjsMessages: initialMessages } = generateBinaryData(numMessages);
     console.log("Generated binary data:", initialMessages.length, "messages");
 
     const timesDOD: number[] = [];
     const timesPB: number[] = [];
 
-    for (let i = 0; i < ITERATIONS; i++) {
+    for (let i = 0; i < iterations; i++) { // Use arg
         // Pre-generate the data snapshot for this iteration.
-        const { protobufjsMessages: dataSnapshot } = generateBinaryData();
+        const { protobufjsMessages: dataSnapshot } = generateBinaryData(numMessages); // Use arg
 
         // Benchmark DOD decode using the snapshot.
         const startDOD = performance.now();
@@ -130,7 +111,7 @@ export async function runBenchmarks(type: BenchmarkType = 'protobuf'): Promise<B
 
         // Optionally, you could verify that resultDOD and resultPB match.
     }
-    const snapshot = generateBinaryData().protobufjsMessages;
+    const snapshot = generateBinaryData(numMessages).protobufjsMessages; // Use arg
     const dodData = decodeWithDOD(snapshot);
     const pbjsData = decodeWithProtobufjs(snapshot);
     console.log("Decoded data:", { dodData, pbjsData });
@@ -155,4 +136,4 @@ export async function runBenchmarks(type: BenchmarkType = 'protobuf'): Promise<B
             },
         ],
     };
-}
+} 

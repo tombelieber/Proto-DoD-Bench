@@ -1,48 +1,73 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BenchmarkResults, HistoricalP99Data } from "../types";
-import { runBenchmarks } from "../main";
-
-const MAX_HISTORICAL_DATA_POINTS = 10;
+import { runBenchmarks } from "@/benchmarks/protobuf_dod_bench";
 
 export type BenchmarkType = 'protobuf' | 'json' | 'custom';
 
+// LocalStorage key for historical data
+const HISTORY_STORAGE_KEY = 'historicalBenchmarkData';
+
+// Function to load historical data from localStorage
+const loadHistoricalData = (): HistoricalP99Data[] => {
+  const savedData = localStorage.getItem(HISTORY_STORAGE_KEY);
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      // Basic validation: check if it's an array
+      if (Array.isArray(parsed)) {
+        // Optional: Further validation on array items if needed
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to parse historical benchmark data from localStorage", e);
+      // Fallback to empty array if parsing fails or data is invalid
+    }
+  }
+  return [];
+};
+
 interface UseBenchmarkOptions {
     type: BenchmarkType;
+    numMessages: number;
+    iterations: number;
+    maxHistoricalPoints: number;
     autoRun?: boolean;
     interval?: number;
 }
 
 export const useBenchmark = (options: UseBenchmarkOptions) => {
-    const { type, autoRun: initialAutoRun = true, interval = 1000 } = options;
+    const { type, numMessages, iterations, maxHistoricalPoints, autoRun: initialAutoRun = true, interval = 1000 } = options;
     const [results, setResults] = useState<BenchmarkResults | null>(null);
     const [loading, setLoading] = useState(false);
     const [autoRun, setAutoRun] = useState(initialAutoRun);
-    const [historicalP99Data, setHistoricalP99Data] = useState<HistoricalP99Data[]>([]);
     const intervalRef = useRef<number | null>(null);
+    const [historicalP99Data, setHistoricalP99Data] = useState<HistoricalP99Data[]>(loadHistoricalData);
 
     const handleRunBenchmarks = useCallback(async () => {
+        if (loading) return;
         setLoading(true);
-        const res: BenchmarkResults = await runBenchmarks(type);
-        setResults(res);
+        try {
+            const res: BenchmarkResults = await runBenchmarks(type, numMessages, iterations);
+            setResults(res);
 
-        const now = new Date().toLocaleTimeString();
-        const newData: HistoricalP99Data = { time: now };
+            const now = new Date().toLocaleTimeString();
+            const newData: HistoricalP99Data = { time: now };
 
-        // Dynamically add p99 stats for each implementation
-        res.implementations.forEach(impl => {
-            newData[impl.name] = impl.stats.p99;
-        });
+            res.implementations.forEach(impl => {
+                newData[impl.name] = impl.stats.p99;
+            });
 
-        setHistoricalP99Data(prev => {
-            const updated = [...prev, newData];
-            if (updated.length > MAX_HISTORICAL_DATA_POINTS) {
-                return updated.slice(-MAX_HISTORICAL_DATA_POINTS);
-            }
-            return updated;
-        });
-
-        setLoading(false);
-    }, [type]);
+            setHistoricalP99Data(prev => {
+                const updated = [...prev, newData];
+                if (updated.length > maxHistoricalPoints) {
+                    return updated.slice(-maxHistoricalPoints);
+                }
+                return updated;
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [type, numMessages, iterations, loading, maxHistoricalPoints]);
 
     const handleAutoRunToggle = useCallback(() => {
         setAutoRun(prev => !prev);
@@ -50,6 +75,9 @@ export const useBenchmark = (options: UseBenchmarkOptions) => {
 
     useEffect(() => {
         if (autoRun) {
+            if (intervalRef.current !== null) {
+                window.clearInterval(intervalRef.current);
+            }
             intervalRef.current = window.setInterval(handleRunBenchmarks, interval);
         } else {
             if (intervalRef.current !== null) {
@@ -64,6 +92,11 @@ export const useBenchmark = (options: UseBenchmarkOptions) => {
             }
         };
     }, [autoRun, handleRunBenchmarks, interval]);
+
+    // Save historical data to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historicalP99Data));
+    }, [historicalP99Data]);
 
     return {
         results,
