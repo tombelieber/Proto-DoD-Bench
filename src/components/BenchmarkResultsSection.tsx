@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef } from "react";
+import { useRef, forwardRef } from "react";
 import { BenchmarkGrid } from "@/components/BenchmarkGrid";
 import { RowData } from "@/types";
 import { FirstDataRenderedEvent, Theme } from "ag-grid-community";

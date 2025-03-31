@@ -1,4 +1,4 @@
-import React, { useMemo, forwardRef } from "react";
+import { useMemo, forwardRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, FirstDataRenderedEvent, Theme, ValueFormatterParams } from "ag-grid-community";
 import { RowData } from "../types";

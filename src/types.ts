@@ -1,5 +1,8 @@
 import React from "react";
 
+// Add the ThemeMode type definition
+export type ThemeMode = "light" | "dark" | "system";
+
 export interface BenchmarkStats {
     min: number;
     max: number;

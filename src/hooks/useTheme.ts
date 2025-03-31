@@ -48,7 +48,7 @@ export const useTheme = () => {
     }, [themeMode]);
 
     const cycleTheme = () => {
-        setThemeMode(prev => {
+        setThemeMode((prev: ThemeMode) => {
             switch (prev) {
                 case "light":
                     return "dark";
