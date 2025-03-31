@@ -101,8 +101,10 @@ function computeStats(times: number[]) {
 //     return times;
 // }
 
-export async function runBenchmarks(): Promise<BenchmarkResults> {
-    console.log("Starting benchmarks...");
+export type BenchmarkType = 'protobuf' | 'json' | 'custom';
+
+export async function runBenchmarks(type: BenchmarkType = 'protobuf'): Promise<BenchmarkResults> {
+    console.log(`Starting ${type} benchmarks...`);
     // Generate a snapshot to log the number of messages (this is optional)
     const { protobufjsMessages: initialMessages } = generateBinaryData();
     console.log("Generated binary data:", initialMessages.length, "messages");

@@ -1,30 +1,34 @@
 import React from "react";
 import { ITERATIONS, NUM_MESSAGES } from "../NUM_MESSAGES";
 
-interface NavbarProps {
-    loading: boolean;
-    autoRun: boolean;
+interface NavbarProps
+{
     themeMode: string;
-    onRunBenchmarks: () => void;
-    onAutoRunToggle: () => void;
     onThemeToggle: () => void;
+    showBenchmarkControls?: boolean;
+    loading?: boolean;
+    autoRun?: boolean;
+    onRunBenchmarks?: () => void;
+    onAutoRunToggle?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-    loading,
-    autoRun,
+export const Navbar: React.FC<NavbarProps> = ( {
+    loading = false,
+    autoRun = false,
     themeMode,
     onRunBenchmarks,
     onAutoRunToggle,
     onThemeToggle,
-}) => {
+    showBenchmarkControls = false,
+} ) =>
+{
     return (
         <nav className="navbar">
             <div className="navbar-left">
                 <div className="navbar-title">
                     <h1>Data Oriented Protobuf Decoding Benchmark</h1>
                     <h3>
-                        NUM_MESSAGES={NUM_MESSAGES}, ITERATIONS={ITERATIONS}
+                        NUM_MESSAGES={ NUM_MESSAGES }, ITERATIONS={ ITERATIONS }
                     </h3>
                     <p>
                         This benchmark compares the performance of a DOD (Structure-of-Array)
@@ -33,22 +37,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
             </div>
             <div className="navbar-buttons">
-                <button className="run-button" onClick={onRunBenchmarks} disabled={loading}>
-                    {loading ? "Running Benchmarks..." : "Run Benchmarks"}
-                </button>
-                <button
-                    className={`auto-run-button ${autoRun ? "active" : ""}`}
-                    onClick={onAutoRunToggle}
-                    disabled={loading}
-                >
-                    {autoRun ? "Stop Auto-Run" : "Start Auto-Run"}
-                </button>
+                { showBenchmarkControls && (
+                    <>
+                        <button className="run-button" onClick={ onRunBenchmarks } disabled={ loading }>
+                            { loading ? "Running Benchmarks..." : "Run Benchmarks" }
+                        </button>
+                        <button
+                            className={ `auto-run-button ${autoRun ? "active" : ""}` }
+                            onClick={ onAutoRunToggle }
+                            disabled={ loading }
+                        >
+                            { autoRun ? "Stop Auto-Run" : "Start Auto-Run" }
+                        </button>
+                    </>
+                ) }
                 <button
                     className="theme-toggle"
-                    onClick={onThemeToggle}
-                    title={`Current theme: ${themeMode} (click to cycle)`}
+                    onClick={ onThemeToggle }
+                    title={ `Current theme: ${themeMode} (click to cycle)` }
                 >
-                    {themeMode === "light" ? "☀️" : themeMode === "dark" ? "🌙" : "💻"}
+                    { themeMode === "light" ? "☀️" : themeMode === "dark" ? "🌙" : "💻" }
                 </button>
             </div>
         </nav>

@@ -4,16 +4,25 @@ import { runBenchmarks } from "../main";
 
 const MAX_HISTORICAL_DATA_POINTS = 10;
 
-export const useBenchmark = () => {
+export type BenchmarkType = 'protobuf' | 'json' | 'custom';
+
+interface UseBenchmarkOptions {
+    type: BenchmarkType;
+    autoRun?: boolean;
+    interval?: number;
+}
+
+export const useBenchmark = (options: UseBenchmarkOptions) => {
+    const { type, autoRun: initialAutoRun = true, interval = 1000 } = options;
     const [results, setResults] = useState<BenchmarkResults | null>(null);
     const [loading, setLoading] = useState(false);
-    const [autoRun, setAutoRun] = useState(true);
+    const [autoRun, setAutoRun] = useState(initialAutoRun);
     const [historicalP99Data, setHistoricalP99Data] = useState<HistoricalP99Data[]>([]);
     const intervalRef = useRef<number | null>(null);
 
     const handleRunBenchmarks = useCallback(async () => {
         setLoading(true);
-        const res: BenchmarkResults = await runBenchmarks();
+        const res: BenchmarkResults = await runBenchmarks(type);
         setResults(res);
 
         const now = new Date().toLocaleTimeString();
@@ -32,7 +41,7 @@ export const useBenchmark = () => {
         });
 
         setLoading(false);
-    }, []);
+    }, [type]);
 
     const handleAutoRunToggle = useCallback(() => {
         setAutoRun(prev => !prev);
@@ -40,7 +49,7 @@ export const useBenchmark = () => {
 
     useEffect(() => {
         if (autoRun) {
-            intervalRef.current = window.setInterval(handleRunBenchmarks, 1000);
+            intervalRef.current = window.setInterval(handleRunBenchmarks, interval);
         } else {
             if (intervalRef.current !== null) {
                 window.clearInterval(intervalRef.current);
@@ -53,7 +62,7 @@ export const useBenchmark = () => {
                 window.clearInterval(intervalRef.current);
             }
         };
-    }, [autoRun, handleRunBenchmarks]);
+    }, [autoRun, handleRunBenchmarks, interval]);
 
     return {
         results,
