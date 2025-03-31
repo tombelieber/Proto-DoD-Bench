@@ -2,23 +2,17 @@ import { MyModel } from "@/MyModel";
 import { MyModelDODStore } from "@/MyModelDODStore";
 import { BenchmarkResults } from "@/types";
 
-interface MyModelData {
-    id: number;
-    value: number;
-}
-
 /**
- * Generates an array of binary messages and their original data,
+ * Generates an array of binary messages,
  * with random values for each iteration.
  */
 function generateBinaryData(numMessages: number): {
     protobufjsMessages: Uint8Array[];
-    originalData: MyModelData[];
 } {
     const protobufjsMessages: Uint8Array[] = [];
-    const originalData: MyModelData[] = [];
 
-    for (let i = 0; i < numMessages; i++) { // Use arg
+    for (let i = 0; i < numMessages; i++) {
+        // Use arg
         // Generate a random value (for example, between 1.0 and 100.0)
         const msg = {
             id: i,
@@ -28,9 +22,8 @@ function generateBinaryData(numMessages: number): {
         // Generate protobufjs message
         const protobufjsEncoded = MyModel.encode(msg);
         protobufjsMessages.push(protobufjsEncoded.finish());
-        originalData.push(msg);
     }
-    return { protobufjsMessages, originalData };
+    return { protobufjsMessages };
 }
 
 // ... (decode functions remain the same) ...
@@ -62,7 +55,6 @@ function decodeWithDOD(binaryData: Uint8Array[]): {
     return dodStore.decodeFromList(binaryData);
 }
 
-
 /**
  * Computes statistics from an array of numbers.
  */
@@ -77,23 +69,20 @@ function computeStats(times: number[]) {
     return { sum, mean, median, p99, min: sorted[0], max: sorted[n - 1] };
 }
 
-export type BenchmarkType = 'protobuf' | 'json' | 'custom';
+// export type BenchmarkType = 'protobuf' | 'json' | 'custom'; // Removed unused type
 
 // Update function signature to accept config
 export async function runBenchmarks(
-    type: BenchmarkType = 'protobuf',
     numMessages: number,
     iterations: number
 ): Promise<BenchmarkResults> {
-    console.log(`Starting ${type} benchmarks with ${numMessages} messages, ${iterations} iterations...`);
-    // Generate a snapshot to log the number of messages (this is optional)
-    const { protobufjsMessages: initialMessages } = generateBinaryData(numMessages);
-    console.log("Generated binary data:", initialMessages.length, "messages");
+    console.log(`Starting benchmarks with ${numMessages} messages, ${iterations} iterations...`);
 
     const timesDOD: number[] = [];
     const timesPB: number[] = [];
 
-    for (let i = 0; i < iterations; i++) { // Use arg
+    for (let i = 0; i < iterations; i++) {
+        // Use arg
         // Pre-generate the data snapshot for this iteration.
         const { protobufjsMessages: dataSnapshot } = generateBinaryData(numMessages); // Use arg
 
@@ -111,10 +100,6 @@ export async function runBenchmarks(
 
         // Optionally, you could verify that resultDOD and resultPB match.
     }
-    const snapshot = generateBinaryData(numMessages).protobufjsMessages; // Use arg
-    const dodData = decodeWithDOD(snapshot);
-    const pbjsData = decodeWithProtobufjs(snapshot);
-    console.log("Decoded data:", { dodData, pbjsData });
 
     const statsDOD = computeStats(timesDOD);
     const statsPB = computeStats(timesPB);
@@ -125,15 +110,15 @@ export async function runBenchmarks(
     return {
         implementations: [
             {
-                name: 'protobufjs',
-                label: 'ProtobufJS',
+                name: "protobufjs",
+                label: "ProtobufJS",
                 stats: statsPB,
             },
             {
-                name: 'dod',
-                label: 'DOD',
+                name: "dod",
+                label: "DOD",
                 stats: statsDOD,
             },
         ],
     };
-} 
+}
