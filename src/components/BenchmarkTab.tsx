@@ -1,140 +1,74 @@
-import { BenchmarkGrid } from "@/components/BenchmarkGrid";
-import { HistoricalGrid } from "@/components/HistoricalGrid";
-import { Navbar } from "@/components/Navbar";
 import { useBenchmark } from "@/hooks/useBenchmark";
 import { useTheme } from "@/hooks/useTheme";
-import { BenchmarkImplementation, RowData } from "@/types";
-import { FirstDataRenderedEvent } from "ag-grid-community";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    RowData,
+    // Remove unused imports
+    // BenchmarkImplementation,
+    // HistoricalP99Data
+} from "../types";
+import { FirstDataRenderedEvent /* Removed GridApi, Theme */ } from "ag-grid-community";
+import React, { useCallback, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getBenchmarkDefinitionById } from "@/benchmarks";
+import { Navbar } from "@/components/Navbar";
+// Import the new section components
+import { BenchmarkResultsSection } from "./BenchmarkResultsSection";
+import { HistoricalDataSection } from "./HistoricalDataSection";
 
-// Define defaults
-const DEFAULT_NUM_MESSAGES = 10000; // Set to 10k
+// Default values
 const DEFAULT_ITERATIONS = 100;
-const DEFAULT_MAX_HISTORY = 10; // Default for historical points
+const DEFAULT_MAX_HISTORY = 10;
 
-// LocalStorage key
-const CONFIG_STORAGE_KEY = "benchmarkConfig";
-
-// Function to get initial config from localStorage or defaults
-const getInitialConfig = () => {
-    const savedConfig = localStorage.getItem(CONFIG_STORAGE_KEY);
-    if (savedConfig) {
-        try {
-            const parsed = JSON.parse(savedConfig);
-            // Basic validation
-            return {
-                numMessages:
-                    typeof parsed.numMessages === "number" && parsed.numMessages > 0
-                        ? parsed.numMessages
-                        : DEFAULT_NUM_MESSAGES,
-                iterations:
-                    typeof parsed.iterations === "number" && parsed.iterations > 0
-                        ? parsed.iterations
-                        : DEFAULT_ITERATIONS,
-                maxHistoricalPoints:
-                    typeof parsed.maxHistoricalPoints === "number" &&
-                    parsed.maxHistoricalPoints > 0 &&
-                    parsed.maxHistoricalPoints <= 100
-                        ? parsed.maxHistoricalPoints
-                        : DEFAULT_MAX_HISTORY,
-            };
-        } catch (e) {
-            console.error("Failed to parse benchmark config from localStorage", e);
-            // Fallback to defaults if parsing fails
-        }
-    }
-    return {
-        numMessages: DEFAULT_NUM_MESSAGES,
-        iterations: DEFAULT_ITERATIONS,
-        maxHistoricalPoints: DEFAULT_MAX_HISTORY,
-    };
-};
-
-// Define the allowed legend positions
 type LegendPosition = "top" | "right" | "bottom" | "left";
 
-interface BenchmarkTabProps {
-    interval?: number;
-}
-
-const DEFAULT_IMPLEMENTATIONS: BenchmarkImplementation[] = [
-    {
-        name: "protobufjs",
-        label: "ProtobufJS",
-        stats: {
-            min: 0,
-            max: 0,
-            mean: 0,
-            median: 0,
-            p99: 0,
-            sum: 0,
-        },
-    },
-    {
-        name: "dod",
-        label: "DOD",
-        stats: {
-            min: 0,
-            max: 0,
-            mean: 0,
-            median: 0,
-            p99: 0,
-            sum: 0,
-        },
-    },
-];
-
-// Calculate throughput needs NUM_MESSAGES, so we pass it now
-const calculateThroughput = (sumMs: number, numMessages: number): number => {
-    if (sumMs === 0) return 0;
-    return Math.round((numMessages / sumMs) * 1000); // Convert ms to seconds
+const calculateThroughput = (sumMs: number, itemsProcessed: number): number => {
+    if (sumMs <= 0 || itemsProcessed <= 0) return 0;
+    // Throughput: items / (total time in seconds)
+    return Math.round(itemsProcessed / (sumMs / 1000));
 };
 
-export const BenchmarkTab: React.FC<BenchmarkTabProps> = ({ interval = 1000 }) => {
-    // Initialize state from localStorage or defaults
-    const initialConfig = getInitialConfig();
-    const [numMessages, setNumMessages] = useState(initialConfig.numMessages);
-    const [iterations, setIterations] = useState(initialConfig.iterations);
-    const [maxHistoricalPoints, setMaxHistoricalPoints] = useState(
-        initialConfig.maxHistoricalPoints
+export const BenchmarkTab: React.FC = () => {
+    const { benchmarkId } = useParams<{ benchmarkId: string }>();
+    const benchmarkDef = useMemo(
+        () => (benchmarkId ? getBenchmarkDefinitionById(benchmarkId) : null),
+        [benchmarkId]
     );
+
+    const [iterations, setIterations] = useState(DEFAULT_ITERATIONS);
+    const [maxHistoricalPoints, setMaxHistoricalPoints] = useState(DEFAULT_MAX_HISTORY);
 
     const {
         results,
         loading,
         autoRun,
         historicalP99Data,
+        benchmarkConfig,
         handleRunBenchmarks,
         handleAutoRunToggle,
-    } = useBenchmark({ numMessages, iterations, maxHistoricalPoints, autoRun: true, interval });
+        handleBenchmarkConfigChange,
+    } = useBenchmark({
+        benchmarkDef: benchmarkDef || null,
+        iterations,
+        maxHistoricalPoints,
+        autoRun: true,
+    });
 
-    const { currentTheme, myTheme, themeMode, cycleTheme } = useTheme();
+    const { myTheme, themeMode, cycleTheme } = useTheme();
 
-    const chartContainerRef1 = useRef<HTMLDivElement>(null);
-    const chartContainerRef2 = useRef<HTMLDivElement>(null);
-
-    // Update config state when form changes
-    const handleConfigChange = useCallback(
-        (newNumMessages: number, newIterations: number, newMaxHistory: number) => {
-            setNumMessages(newNumMessages);
+    const handleGeneralConfigChange = useCallback(
+        (newIterations: number, newMaxHistory: number) => {
             setIterations(newIterations);
             setMaxHistoricalPoints(newMaxHistory);
+            // Persist these general settings if needed (e.g., to localStorage)
         },
         []
     );
 
-    // Save config to localStorage whenever it changes
-    useEffect(() => {
-        const config = { numMessages, iterations, maxHistoricalPoints };
-        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    }, [numMessages, iterations, maxHistoricalPoints]);
+    // Prepare row data for the BenchmarkGrid (passed to BenchmarkResultsSection)
+    const benchmarkRowData: RowData[] = useMemo(() => {
+        if (!results) return [];
 
-    // Prepare row data for the pivoted grid.
-    const rowData: RowData[] = useMemo(() => {
-        const benchmarkResults = results;
-        if (!benchmarkResults) return [];
-
-        return benchmarkResults.implementations.map(impl => ({
+        return results.implementations.map(impl => ({
             implementation: impl.label,
             min: impl.stats.min,
             max: impl.stats.max,
@@ -142,121 +76,104 @@ export const BenchmarkTab: React.FC<BenchmarkTabProps> = ({ interval = 1000 }) =
             median: impl.stats.median,
             p99: impl.stats.p99,
             sum: impl.stats.sum,
-            throughput: calculateThroughput(impl.stats.sum, numMessages),
+            // Throughput calculation now uses itemsProcessed from results
+            throughput: calculateThroughput(impl.stats.sum, results.itemsProcessed),
         }));
-    }, [results, numMessages]);
+    }, [results]);
 
-    // Adjust chart creation for pivoted data.
-    const onFirstDataRendered = useCallback(
-        (params: FirstDataRenderedEvent) => {
-            params.api.autoSizeAllColumns();
-            if (params.api && chartContainerRef1.current && chartContainerRef2.current) {
-                const currentGridData = rowData; // Use the data already calculated for the grid
+    // Callback for BenchmarkResultsSection to create charts A & B
+    const handleBenchmarkFirstDataRendered = useCallback(
+        (
+            params: FirstDataRenderedEvent,
+            chartContainer1: HTMLDivElement | null, // Receive refs from section
+            chartContainer2: HTMLDivElement | null
+        ) => {
+            // Check if refs and data are available
+            if (params.api && chartContainer1 && chartContainer2 && benchmarkRowData.length > 0) {
+                // Clear previous charts
+                chartContainer1.innerHTML = "";
+                chartContainer2.innerHTML = "";
 
-                // --- Chart 1: Time Stats (Implementations as categories, Metrics as series) ---
-                // Select columns from the grid data to create the side-by-side comparison
+                // --- Chart 1: Time Stats ---
                 const chart1ThemeOverrides = {
                     common: {
-                        title: {
-                            enabled: true,
-                            text: "Benchmark Time Stats (ms)",
-                        },
-                        legend: {
-                            position: "bottom" as LegendPosition,
-                        },
-                        padding: {
-                            top: 20,
-                            right: 20,
-                            bottom: 20,
-                            left: 20,
-                        },
+                        title: { enabled: true, text: "Benchmark Time Stats (ms)" },
+                        legend: { position: "bottom" as LegendPosition }, // Cast needed here
+                    },
+                    column: {
+                        // Example: Specify series colors if needed
+                        // series: { fill: ['#fde047', '#f97316'], strokeWidth: 0 },
                     },
                 };
-
                 params.api.createRangeChart({
                     chartType: "groupedColumn",
                     cellRange: {
                         columns: ["implementation", "min", "max", "mean", "median", "p99"],
-                        rowStartIndex: 0,
-                        rowEndIndex: currentGridData.length - 1,
                     },
-                    chartContainer: chartContainerRef1.current,
+                    chartContainer: chartContainer1,
                     chartThemeOverrides: chart1ThemeOverrides,
                 });
 
-                // --- Chart 2: Throughput --- (Keep as is)
+                // --- Chart 2: Throughput ---
                 const chart2ThemeOverrides = {
                     common: {
-                        title: {
-                            enabled: true,
-                            text: "Throughput (messages/second)",
-                        },
-                        legend: {
-                            position: "bottom" as LegendPosition,
-                        },
-                        padding: {
-                            top: 20,
-                            right: 20,
-                            bottom: 20,
-                            left: 20,
-                        },
+                        title: { enabled: true, text: "Throughput (items/second)" },
+                        legend: { position: "bottom" as LegendPosition }, // Cast needed here
                     },
                 };
                 params.api.createRangeChart({
-                    chartType: "groupedBar",
-                    cellRange: {
-                        columns: ["implementation", "throughput"],
-                        rowStartIndex: 0,
-                        rowEndIndex: currentGridData.length - 1,
-                    },
-                    chartContainer: chartContainerRef2.current,
+                    chartType: "column",
+                    cellRange: { columns: ["implementation", "throughput"] },
+                    chartContainer: chartContainer2,
                     chartThemeOverrides: chart2ThemeOverrides,
                 });
             }
         },
-        [rowData]
+        [benchmarkRowData] // Depends on the benchmark row data
     );
 
-    const displayHistoricalData = historicalP99Data;
+    // Callback for HistoricalDataSection (might not be needed if handled internally)
+    // const handleHistoricalFirstDataRendered = useCallback(...);
+
+    if (!benchmarkDef) {
+        return <div>Benchmark with ID '{benchmarkId}' not found.</div>;
+    }
+
+    const ConfigComponent = benchmarkDef.ConfigComponent;
 
     return (
-        <div className="benchmark-tab p-4 space-y-4 flex flex-col h-full">
+        <div className="benchmark-tab">
             <Navbar
-                loading={loading}
-                autoRun={autoRun}
-                themeMode={themeMode}
-                onRunBenchmarks={handleRunBenchmarks}
-                onAutoRunToggle={handleAutoRunToggle}
-                onThemeToggle={cycleTheme}
-                showBenchmarkControls
-                numMessages={numMessages}
                 iterations={iterations}
                 maxHistoricalPoints={maxHistoricalPoints}
-                onConfigChange={handleConfigChange}
+                onConfigChange={handleGeneralConfigChange}
+                onRunBenchmarks={handleRunBenchmarks}
+                onAutoRunToggle={handleAutoRunToggle}
+                loading={loading}
+                autoRun={autoRun}
+                cycleTheme={cycleTheme}
+                currentTheme={themeMode}
+                ConfigComponent={ConfigComponent}
+                benchmarkConfig={benchmarkConfig}
+                onBenchmarkConfigChange={handleBenchmarkConfigChange}
             />
 
-            <div className="top-section flex flex-grow min-h-0 gap-4">
-                <BenchmarkGrid
-                    rowData={rowData}
-                    onGridReady={handleRunBenchmarks}
-                    onFirstDataRendered={onFirstDataRendered}
-                    theme={myTheme}
-                    currentTheme={currentTheme}
-                />
-                <div className="charts-container flex flex-col gap-4">
-                    <div ref={chartContainerRef1} className="chart flex-1" />
-                    <div ref={chartContainerRef2} className="chart flex-1" />
-                </div>
-            </div>
+            {/* Use the new section components */}
+            <BenchmarkResultsSection
+                rowData={benchmarkRowData}
+                onFirstDataRendered={handleBenchmarkFirstDataRendered}
+                theme={myTheme}
+                currentTheme={themeMode}
+            />
 
-            <div className="bottom-section h-[300px] flex-shrink-0">
-                <HistoricalGrid
-                    rowData={displayHistoricalData}
-                    theme={myTheme}
-                    currentTheme={currentTheme}
-                    implementations={DEFAULT_IMPLEMENTATIONS}
-                />
-            </div>
+            <HistoricalDataSection
+                historicalData={historicalP99Data}
+                // Pass implementations for HistoricalGrid internal use
+                implementations={results?.implementations ?? []}
+                // No onFirstDataRendered needed here
+                theme={myTheme}
+                currentTheme={themeMode}
+            />
         </div>
     );
 };

@@ -1,6 +1,12 @@
 import { MyModel } from "@/MyModel";
 import { MyModelDODStore } from "@/MyModelDODStore";
-import { BenchmarkResults } from "@/types";
+import { BenchmarkDefinition, BenchmarkRunOptions, ExtendedBenchmarkResults } from "@/types";
+import { computeStats } from "@/lib/stats";
+import { ProtobufConfigComponent } from "@/components/benchmark-configs/ProtobufConfig";
+
+const DEFAULT_NUM_MESSAGES = 10000;
+
+// --- Benchmark Logic ---
 
 /**
  * Generates an array of binary messages,
@@ -12,21 +18,15 @@ function generateBinaryData(numMessages: number): {
     const protobufjsMessages: Uint8Array[] = [];
 
     for (let i = 0; i < numMessages; i++) {
-        // Use arg
-        // Generate a random value (for example, between 1.0 and 100.0)
         const msg = {
             id: i,
             value: 1.0 + Math.random() * 99.0,
         };
-
-        // Generate protobufjs message
         const protobufjsEncoded = MyModel.encode(msg);
         protobufjsMessages.push(protobufjsEncoded.finish());
     }
     return { protobufjsMessages };
 }
-
-// ... (decode functions remain the same) ...
 
 /**
  * Decodes all messages using protobufjs (static decode).
@@ -39,9 +39,7 @@ function decodeWithProtobufjs(binaryData: Uint8Array[]): MyModel[] {
     return res;
 }
 
-// Preallocate a 20MB target buffer.
 const TARGET_SIZE = 20 * 1024 * 1024; // 20 MB in bytes.
-// Preallocate a store with 20MB of buffer space.
 const dodStore = new MyModelDODStore(TARGET_SIZE);
 
 /**
@@ -55,50 +53,37 @@ function decodeWithDOD(binaryData: Uint8Array[]): {
     return dodStore.decodeFromList(binaryData);
 }
 
-/**
- * Computes statistics from an array of numbers.
- */
-function computeStats(times: number[]) {
-    const sorted = [...times].sort((a, b) => a - b);
-    const n = sorted.length;
-    const sum = sorted.reduce((acc, cur) => acc + cur, 0);
-    const mean = sum / n;
-    const median =
-        n % 2 === 0 ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2 : sorted[Math.floor(n / 2)];
-    const p99 = sorted[Math.floor(n * 0.99)];
-    return { sum, mean, median, p99, min: sorted[0], max: sorted[n - 1] };
-}
+// --- Benchmark Runner Function (Adapts to new interface) ---
 
-// export type BenchmarkType = 'protobuf' | 'json' | 'custom'; // Removed unused type
+async function runProtobufBenchmark(
+    options: BenchmarkRunOptions
+): Promise<ExtendedBenchmarkResults> {
+    // Extract config with type safety
+    const numMessages =
+        typeof options.config.numMessages === "number" && options.config.numMessages > 0
+            ? options.config.numMessages
+            : DEFAULT_NUM_MESSAGES;
+    const iterations = options.iterations;
 
-// Update function signature to accept config
-export async function runBenchmarks(
-    numMessages: number,
-    iterations: number
-): Promise<BenchmarkResults> {
-    console.log(`Starting benchmarks with ${numMessages} messages, ${iterations} iterations...`);
+    console.log(
+        `Starting Protobuf benchmarks with ${numMessages} messages, ${iterations} iterations...`
+    );
 
     const timesDOD: number[] = [];
     const timesPB: number[] = [];
 
     for (let i = 0; i < iterations; i++) {
-        // Use arg
-        // Pre-generate the data snapshot for this iteration.
-        const { protobufjsMessages: dataSnapshot } = generateBinaryData(numMessages); // Use arg
+        const { protobufjsMessages: dataSnapshot } = generateBinaryData(numMessages);
 
-        // Benchmark DOD decode using the snapshot.
         const startDOD = performance.now();
         decodeWithDOD(dataSnapshot);
         const endDOD = performance.now();
         timesDOD.push(endDOD - startDOD);
 
-        // Benchmark protobufjs static decode using the same snapshot.
         const startPB = performance.now();
         decodeWithProtobufjs(dataSnapshot);
         const endPB = performance.now();
         timesPB.push(endPB - startPB);
-
-        // Optionally, you could verify that resultDOD and resultPB match.
     }
 
     const statsDOD = computeStats(timesDOD);
@@ -120,5 +105,24 @@ export async function runBenchmarks(
                 stats: statsDOD,
             },
         ],
+        // Number of messages processed per iteration is the key metric for throughput
+        itemsProcessed: numMessages,
     };
 }
+
+// --- Benchmark Definition Export ---
+
+export const runProtobufBenchmarkDefinition: BenchmarkDefinition = {
+    id: "protobuf",
+    label: "Protobuf vs DOD Decode",
+    runBenchmark: runProtobufBenchmark,
+    ConfigComponent: ProtobufConfigComponent,
+    defaultConfig: {
+        numMessages: DEFAULT_NUM_MESSAGES,
+    },
+    description:
+        "Compares the decoding speed of standard Protobuf.js vs. a custom Data-Oriented Design store.",
+};
+
+// Remove the old export if it exists
+// export async function runBenchmarks(...) {}

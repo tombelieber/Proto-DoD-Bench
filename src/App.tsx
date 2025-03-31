@@ -5,6 +5,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import "./App.css";
 import { BenchmarkTab } from "./components/BenchmarkTab";
+import { benchmarkDefinitions, getBenchmarkDefinitionById } from "./benchmarks";
 
 // Register enterprise modules.
 ModuleRegistry.registerModules([
@@ -12,36 +13,18 @@ ModuleRegistry.registerModules([
     AllEnterpriseModule,
 ]);
 
-const tabs = [
-    {
-        id: "protobuf",
-        label: "Protobuf Benchmarks",
-        path: "/protobuf",
-    },
-    {
-        id: "json",
-        label: "JSON Benchmarks",
-        path: "/json",
-    },
-    {
-        id: "custom",
-        label: "Custom Benchmarks",
-        path: "/custom",
-    },
-];
-
 const TabNavigation: React.FC = () => {
     const location = useLocation();
 
     return (
         <div className="tab-navigation">
-            {tabs.map(tab => (
+            {benchmarkDefinitions.map(def => (
                 <Link
-                    key={tab.id}
-                    to={tab.path}
-                    className={`tab-button ${location.pathname === tab.path ? "active" : ""}`}
+                    key={def.id}
+                    to={`/benchmark/${def.id}`}
+                    className={`tab-button ${location.pathname === `/benchmark/${def.id}` ? "active" : ""}`}
                 >
-                    {tab.label}
+                    {def.label}
                 </Link>
             ))}
         </div>
@@ -49,6 +32,8 @@ const TabNavigation: React.FC = () => {
 };
 
 const App: React.FC = () => {
+    const defaultBenchmarkId = benchmarkDefinitions.length > 0 ? benchmarkDefinitions[0].id : null;
+
     return (
         <BrowserRouter>
             <div className="app-container">
@@ -57,13 +42,20 @@ const App: React.FC = () => {
                         <TabNavigation />
                         <div className="tab-content">
                             <Routes>
-                                <Route path="/" element={<Navigate to="/protobuf" replace />} />
                                 <Route
-                                    path="/protobuf"
-                                    element={<BenchmarkTab type="protobuf" />}
+                                    path="/"
+                                    element={
+                                        defaultBenchmarkId ? (
+                                            <Navigate
+                                                to={`/benchmark/${defaultBenchmarkId}`}
+                                                replace
+                                            />
+                                        ) : (
+                                            <div>No Benchmarks Defined</div>
+                                        )
+                                    }
                                 />
-                                <Route path="/json" element={<BenchmarkTab type="json" />} />
-                                <Route path="/custom" element={<BenchmarkTab type="custom" />} />
+                                <Route path="/benchmark/:benchmarkId" element={<BenchmarkTab />} />
                             </Routes>
                         </div>
                     </div>

@@ -30,13 +30,16 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
     const columnDefs: ColDef<HistoricalP99Data>[] = useMemo(
         () => [
             { headerName: "Time", field: "time", flex: 1 },
-            ...implementations.map(impl => ({
-                headerName: `${impl.label} p99 (ms)`,
-                field: impl.name,
-                type: "numericColumn",
-                flex: 1,
-                valueFormatter: (params: ValueFormatterParams) => params.value.toFixed(2),
-            })),
+            ...(Array.isArray(implementations)
+                ? implementations.map(impl => ({
+                      headerName: `${impl.label} p99 (ms)`,
+                      field: impl.name,
+                      type: "numericColumn",
+                      flex: 1,
+                      valueFormatter: (params: ValueFormatterParams) =>
+                          typeof params.value === "number" ? params.value.toFixed(2) : "",
+                  }))
+                : []),
         ],
         [implementations]
     );
@@ -87,13 +90,23 @@ export const HistoricalGrid: React.FC<HistoricalGridProps> = ({
     // When historical grid data is rendered, create the line chart
     const onFirstDataRendered = useCallback(
         (params: FirstDataRenderedEvent) => {
-            if (params.api && chartContainerRef3.current) {
+            console.log(
+                "HistoricalGrid onFirstDataRendered called. Implementations:",
+                implementations
+            );
+            if (
+                params.api &&
+                chartContainerRef3.current &&
+                Array.isArray(implementations) &&
+                implementations.length > 0
+            ) {
+                console.log("HistoricalGrid: Creating chart...");
                 lineChartRef.current = params.api.createRangeChart({
                     chartType: "area",
                     cellRange: {
                         columns: ["time", ...implementations.map(impl => impl.name)],
                         rowStartIndex: 0,
-                        rowEndIndex: rowData.length - 1,
+                        rowEndIndex: rowData ? rowData.length - 1 : 0,
                     },
                     chartThemeOverrides: {
                         common: {
