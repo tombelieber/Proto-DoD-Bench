@@ -7,50 +7,48 @@ import "./App.css";
 import { BenchmarkTab } from "./components/BenchmarkTab";
 
 // Register enterprise modules.
-ModuleRegistry.registerModules( [
-    IntegratedChartsModule.with( AgChartsEnterpriseModule ),
+ModuleRegistry.registerModules([
+    IntegratedChartsModule.with(AgChartsEnterpriseModule),
     AllEnterpriseModule,
-] );
+]);
 
 const tabs = [
     {
-        id: 'protobuf',
-        label: 'Protobuf Benchmarks',
-        path: '/protobuf'
+        id: "protobuf",
+        label: "Protobuf Benchmarks",
+        path: "/protobuf",
     },
     {
-        id: 'json',
-        label: 'JSON Benchmarks',
-        path: '/json'
+        id: "json",
+        label: "JSON Benchmarks",
+        path: "/json",
     },
     {
-        id: 'custom',
-        label: 'Custom Benchmarks',
-        path: '/custom'
-    }
+        id: "custom",
+        label: "Custom Benchmarks",
+        path: "/custom",
+    },
 ];
 
-const TabNavigation: React.FC = () =>
-{
+const TabNavigation: React.FC = () => {
     const location = useLocation();
 
     return (
         <div className="tab-navigation">
-            { tabs.map( ( tab ) => (
+            {tabs.map(tab => (
                 <Link
-                    key={ tab.id }
-                    to={ tab.path }
-                    className={ `tab-button ${location.pathname === tab.path ? 'active' : ''}` }
+                    key={tab.id}
+                    to={tab.path}
+                    className={`tab-button ${location.pathname === tab.path ? "active" : ""}`}
                 >
-                    { tab.label }
+                    {tab.label}
                 </Link>
-            ) ) }
+            ))}
         </div>
     );
 };
 
-const App: React.FC = () =>
-{
+const App: React.FC = () => {
     return (
         <BrowserRouter>
             <div className="app-container">
@@ -59,10 +57,13 @@ const App: React.FC = () =>
                         <TabNavigation />
                         <div className="tab-content">
                             <Routes>
-                                <Route path="/" element={ <Navigate to="/protobuf" replace /> } />
-                                <Route path="/protobuf" element={ <BenchmarkTab type="protobuf" /> } />
-                                <Route path="/json" element={ <BenchmarkTab type="json" /> } />
-                                <Route path="/custom" element={ <BenchmarkTab type="custom" /> } />
+                                <Route path="/" element={<Navigate to="/protobuf" replace />} />
+                                <Route
+                                    path="/protobuf"
+                                    element={<BenchmarkTab type="protobuf" />}
+                                />
+                                <Route path="/json" element={<BenchmarkTab type="json" />} />
+                                <Route path="/custom" element={<BenchmarkTab type="custom" />} />
                             </Routes>
                         </div>
                     </div>
