@@ -1,7 +1,7 @@
-import { BenchmarkResults } from "./types";
-import { MyModel } from "./MyModel";
-import { MyModelDODStore } from "./MyModelDODStore";
-import { NUM_MESSAGES, ITERATIONS } from "./NUM_MESSAGES";
+import { BenchmarkResults } from "../types";
+import { MyModel } from "../MyModel";
+import { MyModelDODStore } from "../MyModelDODStore";
+import { NUM_MESSAGES, ITERATIONS } from "../NUM_MESSAGES";
 
 // const NUM_MESSAGES = 1e6; // 1 million messages
 // const ITERATIONS = 100;
